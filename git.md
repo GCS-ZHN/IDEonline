@@ -27,6 +27,10 @@
 - 相同分支名   git push <远程主机名> <本地分支名>:<远程分支名>
 - 不同分支名   git push <远程主机名> <本地分支名>
 
+`git reset`
+
+当我们
+
 # 二、服务器上自建git仓库
 通过`git init`事实上就建立了一个本地当前目录仓库（会产生.git子文件夹），而`git init --bare repo.git`则在当前目录下建立了一个无workspace的仓库，目录名repo.git。
 
