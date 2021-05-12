@@ -1,0 +1,320 @@
+{http-nio-8080-exec-2} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{http-nio-8080-exec-2} ERROR org.gcszhn.system.UserAffairs - User has been register!
+{http-nio-8080-exec-4} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{http-nio-8080-exec-4} ERROR org.gcszhn.system.UserAffairs - User has been register!
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} ERROR org.gcszhn.system.UserAffairs - User has been register!
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} ERROR org.gcszhn.system.UserAffairs - User has been register!
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Degister from database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Degister from database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Register to nginx successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} ERROR org.gcszhn.system.UserAffairs - User has been register!
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Degister from database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Register to nginx successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Degister from database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Register to nginx successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Degister from database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Register to nginx successfully!
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Degister from database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Register to nginx successfully!
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Register to nginx successfully!
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Register to nginx successfully!
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Register to nginx successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Remove from database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Register to nginx successfully!
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Register to nginx successfully!
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Register to nginx successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Remove from database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Register to nginx successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} ERROR org.gcszhn.system.UserAffairs - User has been register!
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Remove from database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Remove from database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Register to nginx successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.UserAffairs - Remove from database successfully
+{main} INFO  org.gcszhn.system.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.service.UserAffairs - Authentication failed!
+{main} ERROR org.gcszhn.system.service.UserAffairs - Authentication failed!
+{main} ERROR org.gcszhn.system.service.UserAffairs - Authentication failed!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister successfully at node 210
+{main} INFO  org.gcszhn.system.service.UserAffairs - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} ERROR org.gcszhn.system.service.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register to nginx successfully!
+{main} ERROR org.gcszhn.system.service.UserAffairs - User not found!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register to nginx successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register to nginx successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - Remove from database failed
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - Remove from database failed
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register to nginx successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - Remove from database failed
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-2} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{http-nio-8080-exec-3} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-2} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-2} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register to nginx successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register to nginx successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} ERROR org.gcszhn.system.service.UserAffairs - Degister from nginx failed
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register to nginx successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register to nginx successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register successfully at node 210
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register to nginx successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-2} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-3} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{http-nio-8080-exec-6} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register successfully at node 210
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register to nginx successfully!
+{http-nio-8080-exec-2} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-4} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-2} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister successfully at node 210
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister successfully at node 210
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register successfully at node 210
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register to nginx successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-2} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-2} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-2} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-3} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-4} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-6} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-5} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-7} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-9} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-2} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-4} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-2} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister successfully at node 210
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} INFO  org.gcszhn.AppTest - 密钥：MIICdwIBADANBgkqhkiG9w0BAQEFAASCAmEwggJdAgEAAoGBAIzi+mamnxsguXWXp7NGB7+cIhWBJLoeEgQ21Qg/VePRRnX+8Net...
+{main} INFO  org.gcszhn.AppTest - 公钥：MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCM4vpmpp8bILl1l6ezRge/nCIVgSS6HhIENtUIP1Xj0UZ1/vDXrb2kD49s5+9S...
+{main} INFO  org.gcszhn.AppTest - 明文：张洪宁
+{main} INFO  org.gcszhn.AppTest - 密文：KRJwwIxjVKIceCiM8a3noQRwGVBUpfjuZKKCOyCSN3VrfNYVps27YMJ235qIdPNnMied1lrB7bgXt1VmQ6hkcG9XDWw4jO49pkH7...
+{main} INFO  org.gcszhn.AppTest - 解密：张洪宁
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register successfully at node 210
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register to nginx successfully!
+{main} INFO  org.gcszhn.AppTest - 密钥：MIICdQIBADANBgkqhkiG9w0BAQEFAASCAl8wggJbAgEAAoGBAIMchnzzf9tQywWJPRb647Ax0iCl2UE0f6+6zpAAMLH7ixwiGlOj...
+{main} INFO  org.gcszhn.AppTest - 公钥：MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCDHIZ883/bUMsFiT0W+uOwMdIgpdlBNH+vus6QADCx+4scIhpTo9l3D74qDmM5...
+{main} INFO  org.gcszhn.AppTest - 明文：张洪宁
+{main} INFO  org.gcszhn.AppTest - 密文：aX61AljkYQf9Wa1RP+ny+Wipx4KzrqmJss6M6r9CjoJjJ9wWWqNySfQA/472KdJSL8moItgCe9yNAP8pHFbBJvUv1szS+GZDWDNY...
+{main} INFO  org.gcszhn.AppTest - 解密：张洪宁
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister successfully at node 210
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - Authentication failed!
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - Authentication failed!
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register successfully at node 210
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register to nginx successfully!
+{main} INFO  org.gcszhn.AppTest - 密钥：MIICdwIBADANBgkqhkiG9w0BAQEFAASCAmEwggJdAgEAAoGBAMroR4hhMJ0yla7uulUYLONQejzOx8yh1ux/3eDwOx8S7c8zjygo...
+{main} INFO  org.gcszhn.AppTest - 公钥：MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDK6EeIYTCdMpWu7rpVGCzjUHo8zsfModbsf93g8DsfEu3PM48oKBLwR3ggxKyu...
+{main} INFO  org.gcszhn.AppTest - 明文：张洪宁
+{main} INFO  org.gcszhn.AppTest - 密文：HeV2CLoKGeGbyDwQdunb6R56GyS0zDtlOSPYVN5xRHfugbgJGq8SwLr6XepOaMiVCQ4TGbAvdm/qFXD8LFimwDu2gF2YW29K94pj...
+{main} INFO  org.gcszhn.AppTest - 解密：张洪宁
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister successfully at node 210
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Remove from database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Degister from nginx successfully
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - User not found!
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register successfully at node 210
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Register to database successfully
+{main} INFO  org.gcszhn.system.service.UserAffairs - Register to nginx successfully!
+{main} INFO  org.gcszhn.AppTest - 密钥：MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAKC3Qv86X8xv7sqvOpCo1cru7ptzIIJ4erzfdRG6m0QK9CdtwfxG...
+{main} INFO  org.gcszhn.AppTest - 公钥：MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCgt0L/Ol/Mb+7KrzqQqNXK7u6bcyCCeHq833URuptECvQnbcH8Rmus/EPoNvqm...
+{main} INFO  org.gcszhn.AppTest - 明文：张洪宁
+{main} INFO  org.gcszhn.AppTest - 密文：C8GSF42WfccVFy8Ms+1FLUu6/nW+kqpC4LmAwimAg58XsWBaYbmXp/g5jZHbua3bmu2KBL61I8ocRm/lkvlhUV4jP/R86Wi5sfD+...
+{main} INFO  org.gcszhn.AppTest - 解密：张洪宁
+{main} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{main} ERROR org.gcszhn.system.service.UserDaoImpl - Authentication failed!
