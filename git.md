@@ -12,11 +12,11 @@
 
 `git add <DIR>`
 
-添加本地文件夹进入仓库。`git init`后需要add才能将内容递交加入仓库。添加本文件夹`git add .`。
+添加本地文件夹进入仓库。`git init`后需要add到index区域（一个压缩包文件）才能将内容递交加入仓库。添加本文件夹`git add .`。没有add的文件称为`unstage`，`git status`可以看到状态。add后称为`stage`。
 
 `git commit -m <COMMIT>`
 
-`git add`只是将项目加入暂存区，利用commit最终将项目递交到本地仓库。参数为提交的备注评论。
+`git add`只是将项目加入暂存区index，利用commit最终将项目递交到本地仓库。参数为提交的备注评论。
 
 `git commit -am <COMMIT>`可以用于删除。
 
@@ -29,7 +29,29 @@
 
 `git reset`
 
-当我们
+该命令主要两个功能，以不同参数形式实现
+- 已经commit时，版本退回
+- 未commit时，回退到unstage或者回退到原先源码
+  
+    git reset –-mixed  <版本>  [<文件>]   ## 撤销commit和add，不还原工作区
+    git reset –-soft   <版本>             ## 撤销comit，不撤销add和还原工作区
+    git reset --hard   <版本>             ## 撤销commit、add，并还原工作区
+
+例如，下面使用HEAD代表当前仓库版本，这是也是不加版本的默认版本。用于前述情况2，此时因为还原版本与当前版本相同，故不存在回撤commit，即类似于没有保存文件，还原文件更改。
+
+    git reset file.txt
+    git reset --mixed HEAD file.txt
+
+其中--mix为默认参数，可省略，该模式下可以指定还原某个文件。`git reset --hard`直接回退当前修改。而指定具体版本号则会实现第一点，回退版本。版本号（commit）可以通过`git log`来查看。
+
+    reset eb43bf file.txt
+
+`git checkout`
+
+与`reset --hard`有类似作用，例如`git checkout -- git.md`即可消除更改。但checkout对于多分支情况，不会变更每个分支所指代的commit，而是会切换当前HEAD指定分支。
+
+![checkout与reset的差异](https://segmentfault.com/img/bVz7pB?w=500&h=366)
+
 
 # 二、服务器上自建git仓库
 通过`git init`事实上就建立了一个本地当前目录仓库（会产生.git子文件夹），而`git init --bare repo.git`则在当前目录下建立了一个无workspace的仓库，目录名repo.git。
@@ -56,3 +78,5 @@ git命令可以基于HTTPS协议或是SSH协议进行访问，且根据url配置
 
 # 参考文献
 [1] [如何使用git命令行上传项目到github](https://blog.csdn.net/majinggogogo/article/details/81152938)
+
+[2] [](https://segmentfault.com/a/1190000006185954)
