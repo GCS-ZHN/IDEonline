@@ -27,3 +27,5 @@
 {http-nio-8080-exec-8} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
 {http-nio-8080-exec-1} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
 {http-nio-8080-exec-3} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-5} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
+{http-nio-8080-exec-7} INFO  org.gcszhn.system.service.UserDaoImpl - Authentication successfully!
