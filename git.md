@@ -39,5 +39,16 @@ git命令可以基于HTTPS协议或是SSH协议进行访问，且根据url配置
     git@gitee.com:GCSZHN/IDRBonline.git
     git@github.com:GCS-ZHN/IDRBonline.git
 
+实际上，gitee和github是为我们专门创建了一个git用户（对应zhanghn），且仓库目录都以.git结尾（相当于是一种规范，clone时会自动去掉，得到真实项目名）。
+
+事实上，git仓库关键的是.git文件夹下的一下记录一系列commit状态信息。不同节点仓库通过.git下的commit信息来通过变更。因此必须先从远程仓库pull下来保持一致，才能利用push修改提交远程仓库。
+
+    git init                   ## 建立本地仓库，出现.git
+    git add .                  ## 加入新增文件到缓冲区，准确commit
+    git commit -am "commit"    ## commit到本地仓库，即添加变化信息去本地仓库
+    git push <远程仓库> <分支>  ## push同步更新到远程仓库，若未获取最新远程，必须先将远程仓库pull下来
+
+对于github、gitee等专业的git托管仓库，在提交远程（push）后，**会自动将更新合并到对应分支的工作区**。这类似docker容器的文件分层一样，git会记录的实际上是修改差异（在.git文件夹下），默认不会自动更改工作区（即我们看到的真实项目）。
+
 # 参考文献
 [1] [如何使用git命令行上传项目到github](https://blog.csdn.net/majinggogogo/article/details/81152938)
