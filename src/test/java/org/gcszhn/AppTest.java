@@ -44,18 +44,25 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Rollback(false)
     @Test
     public void testRegisterAccount() {
-        ua.registerAccount(ua.createUser("test5", "test5",  new UserNode(5, false, false, new int[][]{
-            {49013, 8888},
-            {48013, 8067},
-            {47013, 8080}
-        })));
+        ua.registerAccount(ua.createUser("lumk", "lumk",  
+            new UserNode(4, false, false, new int[][]{
+                {49012, 8888},
+                {48012, 8067},
+                {47012, 8080}
+            }),
+            new UserNode(5, false, false, new int[][]{
+                {49012, 8888},
+                {48012, 8067},
+                {47012, 8080}
+            })
+        ));
     }
     /**
      * 账号验证测试
      */
     @Test
     public void testAccountVerify() {
-        User user = ua.createUser("test5", "test5");
+        User user = ua.createUser("lumk", "lumk");
         ua.getUserDao().verifyUser(user);
         System.out.println(JSON.toJSONString(user));
     }
@@ -74,7 +81,7 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Rollback(false)
     @Test
     public void testCancelAccount() {
-        ua.cancelAccount(ua.createUser("test5", "test6"));
+        ua.cancelAccount(ua.createUser("lumk", "lumk"));
     }
     /**
      * 本地命令测试
