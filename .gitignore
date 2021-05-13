@@ -2,5 +2,7 @@
 *.yml
 *.properties
 *.json
-.vscode
-bin
+.vscode/
+classes/
+bin/
+release/
