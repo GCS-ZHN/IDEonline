@@ -1,1 +1,0 @@
-Pleass remve ext '.public' and change personal configure before use configure file
