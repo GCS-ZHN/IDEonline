@@ -1,5 +1,6 @@
-.class
-.yml
-.properties
-.json
+*.class
+*.yml
+*.properties
+*.json
 .vscode
+bin
