@@ -45,7 +45,7 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Test
     public void testRegisterAccount() {
         ua.registerAccount(ua.createUser("lumk", "lumk",  
-            new UserNode(4, false, false, new int[][]{
+            new UserNode(4, true, false, new int[][]{
                 {49012, 8888},
                 {48012, 8067},
                 {47012, 8080}
