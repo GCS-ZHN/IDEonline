@@ -1,3 +1,3 @@
 # IDRBonline
-The online platform of IDRB Lab
+The backend of IDRB online
 Hello world
