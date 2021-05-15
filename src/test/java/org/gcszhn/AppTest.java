@@ -33,6 +33,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 import org.springframework.test.context.junit4.SpringRunner;
+
+/**
+ * 单元测试类，必须添加Spring的测试注解用于依赖注入
+ * @author Zhang.H.N
+ * @version 1.0
+ */
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
