@@ -38,6 +38,8 @@ public class User implements HttpSessionBindingListener, Serializable {
     /**密码，限定UserAffairs类进行setter/getter */
     @Getter(AccessLevel.PROTECTED) @Setter (AccessLevel.PROTECTED)
     private String password;
+    @Getter @Setter
+    private String address;
     /**活跃节点 */
     @Getter
     private int aliveNode = -1;

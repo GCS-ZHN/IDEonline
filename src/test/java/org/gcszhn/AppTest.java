@@ -21,6 +21,8 @@ import com.alibaba.fastjson.JSON;
 
 import org.gcszhn.system.security.RSAEncrypt;
 import org.gcszhn.system.service.AppLog;
+import org.gcszhn.system.service.MailService;
+import org.gcszhn.system.service.MailServiceImpl;
 import org.gcszhn.system.service.UserNode;
 import org.gcszhn.system.service.ProcessInteraction;
 import org.gcszhn.system.service.RedisOperation;
@@ -31,6 +33,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -159,6 +162,14 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
                 }
             }
         );
+    }
+    @Autowired
+    MailService ms;
+    @Test
+    public void testMail() {
+        ua.mailToAll("System update of IDRB IDEonline", 
+        "/config/mail.temp",
+        "text/html;charset=UTF-8");
     }
 }
 

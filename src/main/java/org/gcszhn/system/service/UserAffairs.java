@@ -45,6 +45,8 @@ public class UserAffairs {
     /**DAO对象 */
     @Autowired @Getter
     private UserDao userDao;
+    @Autowired
+    MailService mailService;
     /**Docker容器标签前缀 */
     private static String tagPrefix;
     /**配置docker容器标签前缀 */
@@ -193,6 +195,24 @@ public class UserAffairs {
                     user.getAccount()));
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+    public void mailToAll(String subject, String tempfile, String contentType) {
+        try {
+            InputStream is = UserAffairs.class.getResourceAsStream(tempfile);
+            String content = new String(is.readAllBytes(), JSONConfig.DEFAULT_CHARSET);
+            userDao.fetchUserList().forEach((User user)->{
+                if (user.getAddress()!=null) {
+                    mailService.sendMail(
+                        user.getAddress(), 
+                        subject,
+                        content.replace("${username}", user.getAccount()), 
+                        contentType
+                    );
+                }
+            });
+        } catch (Exception e) {
+            AppLog.printMessage(e.getMessage(), Level.ERROR);
         }
     }
 }

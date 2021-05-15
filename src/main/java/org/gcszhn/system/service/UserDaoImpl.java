@@ -50,11 +50,13 @@ public class UserDaoImpl implements UserDao {
     @Override
     public void addUser(User user) {
         try { 
-            String sql = "INSERT INTO "+table+" SET username=?,password=?,nodeconfig=?";
+            String sql = "INSERT INTO "+table+" SET username=?,password=?,nodeconfig=?,address=?";
             jdbcTemplate.update(sql,
                 user.getAccount(),
                 encryptPassword(user.getPassword()),
-                JSON.toJSONString(user.getNodeConfigs()));
+                JSON.toJSONString(user.getNodeConfigs()),
+                user.getAddress()
+                );
             AppLog.printMessage("Register to database successfully");
         } catch (Exception e) {
             AppLog.printMessage("Register to database failed", Level.ERROR);
@@ -77,12 +79,14 @@ public class UserDaoImpl implements UserDao {
     @Override
     public int verifyUser(User user) {
         try {
-            String sql = "SELECT password,nodeconfig FROM "+table+" WHERE username=?";
+            String sql = "SELECT password,nodeconfig,address FROM "+table+" WHERE username=?";
             List<Map<String, Object>> rs = jdbcTemplate.queryForList(sql, user.getAccount());
             String secret = null;
+            String address = null;
             Object nodeset = null;
             if (rs.size()==1) {
                 secret = (String) rs.get(0).get("password");
+                address = (String) rs.get(0).get("address");
                 if (!user.getAccount().equals("root")) {
                     nodeset = rs.get(0).get("nodeconfig");
                 }
@@ -104,6 +108,7 @@ public class UserDaoImpl implements UserDao {
                 AppLog.printMessage("Authentication successfully!");
                 // root用户是管理员，没有节点信息
                 if (!user.getAccount().equals("root")) {
+                    user.setAddress(address);
                     if (nodeset instanceof ArrayList) {//序列化对象
                         user.setNodeConfigs((ArrayList<UserNode>) nodeset);
                     } else if (nodeset instanceof byte[]) {//历史遗留数据格式
@@ -142,10 +147,11 @@ public class UserDaoImpl implements UserDao {
     @Override
     public void updateUser(User user) {
         try {
-            String sql = "UPDATE "+table+" SET password=?,nodeconfig=? WHERE username=?";
+            String sql = "UPDATE "+table+" SET password=?,nodeconfig=?,address=? WHERE username=?";
             jdbcTemplate.update(sql,
                 encryptPassword(user.getPassword()),
                 JSON.toJSONString(user.getNodeConfigs()),
+                user.getAddress(),
                 user.getAccount()
             );
             AppLog.printMessage("Update user info successfully!");
@@ -156,7 +162,7 @@ public class UserDaoImpl implements UserDao {
     }
     @Override
     public List<User> fetchUserList() {
-        String sql = "SELECT username,nodeconfig FROM " +table;
+        String sql = "SELECT username,nodeconfig,address FROM " +table;
         List<Map<String, Object>> result = jdbcTemplate.queryForList(sql);
         List<User> res = new ArrayList<>(result.size());
         result.forEach((Map<String, Object> mp)->{
@@ -164,6 +170,7 @@ public class UserDaoImpl implements UserDao {
                 User user = new User();
                 res.add(user);
                 user.setAccount((String)mp.get("username"));
+                user.setAddress((String)mp.get("address"));
                 String jsonString = (String)mp.get("nodeconfig");
                 if (jsonString != null && !jsonString.equals("")) {
                     JSONArray jsonArray = JSONArray.parseArray(jsonString);
