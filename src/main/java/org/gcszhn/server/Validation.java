@@ -20,8 +20,9 @@ import javax.servlet.http.HttpSession;
 
 import org.gcszhn.system.security.RSAEncrypt;
 import org.gcszhn.system.security.RSAEncryptException;
-import org.gcszhn.system.service.User;
-import org.gcszhn.system.service.UserAffairs;
+import org.gcszhn.system.service.UserDaoService;
+import org.gcszhn.system.service.UserService;
+import org.gcszhn.system.service.obj.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,6 +33,8 @@ import lombok.Data;
  */
 @RestController
 public class Validation {
+    @Autowired
+    UserDaoService userDaoService;
     /**验证结果Bean对象 */
     @Data
     class Result {
@@ -42,7 +45,7 @@ public class Validation {
     HttpServletRequest request;
     /**用户处理Bean组件 */
     @Autowired
-    UserAffairs ua;
+    UserService ua;
     /**接受验证请求的方法 */
     @PostMapping("/validate")
     public Result doValidate() {
@@ -73,7 +76,7 @@ public class Validation {
                     User user = ua.createUser(account, 
                        RSAEncrypt.decryptToString(passwd, keys[0]));
 
-                    status = ua.getUserDao().verifyUser(user);
+                    status = userDaoService.verifyUser(user);
                     //密码必须正确才能更新节点属性
                     if (!user.isContainNode(Integer.parseInt(node)) && status==0) status =  -1;
                     if (status == 0) {

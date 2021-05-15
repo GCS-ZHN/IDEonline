@@ -17,23 +17,19 @@ package org.gcszhn;
 
 import java.io.IOException;
 
-import com.alibaba.fastjson.JSON;
-
 import org.gcszhn.system.security.RSAEncrypt;
-import org.gcszhn.system.service.AppLog;
 import org.gcszhn.system.service.MailService;
-import org.gcszhn.system.service.MailServiceImpl;
-import org.gcszhn.system.service.UserNode;
-import org.gcszhn.system.service.ProcessInteraction;
-import org.gcszhn.system.service.RedisOperation;
-import org.gcszhn.system.service.User;
-import org.gcszhn.system.service.UserAffairs;
-import org.gcszhn.system.service.UserDao;
+import org.gcszhn.system.service.RedisService;
+import org.gcszhn.system.service.UserService;
+import org.gcszhn.system.service.obj.User;
+import org.gcszhn.system.service.obj.UserNode;
+import org.gcszhn.system.service.until.AppLog;
+import org.gcszhn.system.service.until.ProcessInteraction;
+import org.gcszhn.system.service.UserDaoService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -41,29 +37,22 @@ import org.springframework.test.context.junit4.SpringRunner;
 @SpringBootTest
 public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Autowired
-    UserAffairs ua;
+    UserService ua;
+    @Autowired
+    UserDaoService dao;
     /**
      * 账号注册测试
      */
     @Rollback(false)
     @Test
     public void testRegisterAccount() {
-        ua.registerAccount(ua.createUser("test1", "test1",  
+        ua.registerAccount(ua.createUser("test5", "test5",  
             new UserNode(5, false, false, new int[][]{
                 {49014, 8888},
                 {48014, 8067},
                 {47014, 8080}
             })
         ));
-    }
-    /**
-     * 账号验证测试
-     */
-    @Test
-    public void testAccountVerify() {
-        User user = ua.createUser("lumk", "lumk");
-        ua.getUserDao().verifyUser(user);
-        System.out.println(JSON.toJSONString(user));
     }
     /**
      * 修改密码测试
@@ -80,7 +69,7 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Rollback(false)
     @Test
     public void testCancelAccount() {
-        ua.cancelAccount(ua.createUser("test1", "test1"));
+        ua.cancelAccount(ua.createUser("test5", "test6"));
     }
     /**
      * 本地命令测试
@@ -121,11 +110,13 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     /**
      * Redis连接测试
      */
+    @Autowired
+    RedisService redisService;
     @Test
     public void testRedis() {
-        RedisOperation.redisHset("session", "session12", "this is java test for redis");
-        System.out.println(RedisOperation.redisHget("session", "session12"));
-        RedisOperation.redisHdel("session", "session12");
+        redisService.redisHset("session", "session12", "this is java test for redis");
+        System.out.println(redisService.redisHget("session", "session12"));
+        redisService.redisHdel("session", "session12");
     }
     /**
      * RSA加密解密测试
@@ -143,31 +134,17 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
         AppLog.printMessage("密文："+encryted.substring(0, 100)+"...");
         AppLog.printMessage("解密："+decrypted);
     }
-    @Autowired
-    UserDao dao;
-    @Test
     public void testFetchUser() {
         dao.fetchUserList().forEach(
             (User u)->{
-                if (!u.getAccount().equals("root")) {
-                    for (UserNode un: u.getNodeConfigs()) {
-                        try {
-                            ProcessInteraction.localExec(null, 
-                            String.format("docker -H 172.16.10.%d update MULTIPLE1.1-%s --memory=24g --memory-swap=24g", un.host, u.getAccount()).split(" ")
-                            );
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
+                System.out.println("User:"+u.getAccount()+",Address:"+u.getAddress());
             }
         );
     }
     @Autowired
     MailService ms;
-    @Test
     public void testMail() {
-        ua.mailToAll("System update of IDRB IDEonline", 
+       ua.sendMailToAll("System update of IDRB IDEonline", 
         "/config/mail.temp",
         "text/html;charset=UTF-8");
     }

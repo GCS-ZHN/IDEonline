@@ -17,12 +17,14 @@ package org.gcszhn.system.service;
 
 import java.util.List;
 
+import org.gcszhn.system.service.obj.User;
+
 /**
  * 用户数据处理的DAO接口
  * @author Zhang.H.N
  * @version 1.0
  */
-public interface UserDao {
+public interface UserDaoService {
     /**
      * Add a new user record to database
      * @param user new user

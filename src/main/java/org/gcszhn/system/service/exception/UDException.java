@@ -13,7 +13,7 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service;
+package org.gcszhn.system.service.exception;
 
 /**
  * DAO接口异常

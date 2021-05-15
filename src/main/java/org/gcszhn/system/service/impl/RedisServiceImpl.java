@@ -13,109 +13,72 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service;
-
+package org.gcszhn.system.service.impl;
+import org.gcszhn.system.service.RedisService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Repository;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisShardInfo;
 
-/**APP中专门处理与Redis服务器交互的工具
+/**
+ * Redis服务的接口扩展
  * @author Zhang.H.N
  * @version 1.0
  */
-@Service
-public class RedisOperation {
+@Repository
+public class RedisServiceImpl implements RedisService {
     /**默认主机配置 */
     private static String DEFAULT_HOST;
     /**默认端口配置 */
     private static int DEFAULT_PORT;
     /**默认密码配置 */
     private static String DEFAULT_PASS;
-    /**
-     * 初始化Redis主机
-     * @param host 配置的主机
-     */
+    @Override
     @Value("${redis.host}")
     public void setHost(String host) {
-        RedisOperation.DEFAULT_HOST = host;
+        RedisServiceImpl.DEFAULT_HOST = host;
     }
-    /**
-     * 初始化Redis端口
-     * @param port 配置的端口
-     */
+    @Override
     @Value("${redis.port}")
     public void setPort(int port) {
-        RedisOperation.DEFAULT_PORT = port;
+        RedisServiceImpl.DEFAULT_PORT = port;
     }
-    /**
-     * 初始化Redis密码
-     * @param passwd 配置的密码
-     */
+    @Override
     @Value("${redis.password}")
     public void setPassword(String passwd) {
-        RedisOperation.DEFAULT_PASS = passwd;
+        RedisServiceImpl.DEFAULT_PASS = passwd;
     }
-    /**
-     * 连接指定主机指定端口的Redis服务器
-     * @param host 主机IP或域名
-     * @param port Redis服务端口
-     * @param passwd 密码
-     * @return Redis连接对象
-     */
-    public static Jedis getRedis(String host, int port, String passwd) { 
+    @Override
+    public Jedis getRedis(String host, int port, String passwd) { 
         JedisShardInfo jsi = new JedisShardInfo(host, port);
         if (passwd != null) jsi.setPassword(passwd);
         Jedis jedis = new Jedis(jsi);
         return jedis;
     }
-    /**
-     * 连接指定主机的Redis服务器
-     * @param host 主机IP或域名
-     * @param passwd 密码
-     * @return Redis连接对象
-     */
-    public static Jedis getRedis(String host, String passwd) {
+    @Override
+    public Jedis getRedis(String host, String passwd) {
         return getRedis(host, 6379, passwd);
     }
-    /**
-     * 连接本地Redis服务器
-     * @param passwd 密码
-     * @return Redis连接对象
-     */
-    public static Jedis getRedis(String passwd) {
+    @Override
+    public Jedis getRedis(String passwd) {
         return getRedis("localhost", passwd);
     }
-    /**
-     * 为哈希表添加字段
-     * @param key 哈希表键值
-     * @param field 字段
-     * @param value 值
-     */
-    public static void redisHset(String key, String field, String value) {
+    @Override
+    public void redisHset(String key, String field, String value) {
         Jedis jedis = getRedis(DEFAULT_HOST, DEFAULT_PORT, DEFAULT_PASS);
         jedis.hset(key, field, value);
         jedis.close();
     }
-    /**
-     * 获取哈希表的指定字段
-     * @param key 哈希表的键值
-     * @param field 字段
-     * @return
-     */
-    public static String redisHget(String key, String field) {
+    @Override
+    public String redisHget(String key, String field) {
         Jedis jedis = getRedis(DEFAULT_HOST, DEFAULT_PORT, DEFAULT_PASS);
         String value = jedis.hget(key, field);
         jedis.close();
         return value;
     }
-    /**
-     * 删除redis哈希表的指定字段
-     * @param key 哈希表的键值，即哪个哈希表
-     * @param field 字段
-     */
-    public static void redisHdel(String key, String field) {
+    @Override
+    public void redisHdel(String key, String field) {
         Jedis jedis = getRedis(DEFAULT_HOST, DEFAULT_PORT, DEFAULT_PASS);
         jedis.hdel(key, field);
         jedis.close();

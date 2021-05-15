@@ -38,4 +38,24 @@ redis:
     password: <PASSWORD>
 
 jsonconfig: /config/settings.json
+
+mail:
+    transport:
+        protocol: smtp
+    store:
+        protocol: imap
+    smtp:
+        class: com.sun.mail.smtp.SMTPSSLTransport
+        host: smtp.zju.edu.cn
+        port: 994
+        ssl:
+            enable: true
+        auth: true
+    imap:
+        class: com.sun.mail.imap.IMAPSSLStore
+        port: 993
+    auth:
+        username: <SEND ADDRESS>
+        nickname: <NICK ADDRESS>
+        password: <SEND PASSWORD>
  

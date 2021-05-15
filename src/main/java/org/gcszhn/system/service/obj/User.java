@@ -13,7 +13,7 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service;
+package org.gcszhn.system.service.obj;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -21,7 +21,10 @@ import java.util.ArrayList;
 import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
 
-import lombok.AccessLevel;
+import org.apache.logging.log4j.Level;
+import org.gcszhn.system.service.RedisService;
+import org.gcszhn.system.service.until.AppLog;
+
 import lombok.Getter;
 import lombok.Setter;
 /**
@@ -33,10 +36,10 @@ public class User implements HttpSessionBindingListener, Serializable {
     /**序列化ID */
     private static final long serialVersionUID = 202105081043L;
     /**用户名，限定UserAffairs类进行使用setter */
-    @Getter @Setter(AccessLevel.PROTECTED)
+    @Getter @Setter
     private String account;
     /**密码，限定UserAffairs类进行setter/getter */
-    @Getter(AccessLevel.PROTECTED) @Setter (AccessLevel.PROTECTED)
+    @Getter @Setter
     private String password;
     @Getter @Setter
     private String address;
@@ -50,20 +53,23 @@ public class User implements HttpSessionBindingListener, Serializable {
      * 设置用户注册节点
      * @param nodeConfigs
      */
-    protected void setNodeConfigs(ArrayList<UserNode> nodeConfigs) {
+    public void setNodeConfigs(ArrayList<UserNode> nodeConfigs) {
         this.nodeConfigs = nodeConfigs;
     }
     /**
      * 设置用户注册节点
      * @param nodeConfigs
      */
-    protected void setNodeConfigs(UserNode... nodeConfigs) {
+    public void setNodeConfigs(UserNode... nodeConfigs) {
         if (nodeConfigs == null) return;
         this.nodeConfigs = new ArrayList<>(nodeConfigs.length);
         for (final UserNode nc : nodeConfigs) {
             this.nodeConfigs.add(nc);
         }
     }
+    /**redis服务组件，由自定义的用户服务负责注入 */
+    @Setter
+    private RedisService redisService;
     /**
      * 检查是否含有指定节点
      * 
@@ -89,12 +95,22 @@ public class User implements HttpSessionBindingListener, Serializable {
     /** 登录时用户被绑定到会话，同时写入Redis缓存 */
     @Override
     public void valueBound(HttpSessionBindingEvent event) {
-        RedisOperation.redisHset("session", event.getSession().getId(), account + "-" + aliveNode);
+        try {
+            redisService.redisHset(
+                "session", 
+                event.getSession().getId(), 
+                account + "-" + aliveNode);
+        } catch (NullPointerException e) {
+            AppLog.printMessage(e.getMessage(), Level.ERROR);
+        }
     }
-
     /** 注销或会话失效时用户与会话解绑，同时删除Redis缓存 */
     @Override
     public void valueUnbound(HttpSessionBindingEvent event) {
-        RedisOperation.redisHdel("session", event.getSession().getId());
+        try {
+            redisService.redisHdel("session", event.getSession().getId());
+        } catch (NullPointerException e) {
+            AppLog.printMessage(e.getMessage(), Level.ERROR);
+        }
     }
 }

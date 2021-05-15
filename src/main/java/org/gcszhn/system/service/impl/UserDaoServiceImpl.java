@@ -13,7 +13,7 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service;
+package org.gcszhn.system.service.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
@@ -27,6 +27,11 @@ import com.alibaba.fastjson.JSONArray;
 import org.apache.logging.log4j.Level;
 import org.gcszhn.system.security.RandomUtilis;
 import org.gcszhn.system.security.ShaEncrypt;
+import org.gcszhn.system.service.UserDaoService;
+import org.gcszhn.system.service.exception.UDException;
+import org.gcszhn.system.service.obj.User;
+import org.gcszhn.system.service.obj.UserNode;
+import org.gcszhn.system.service.until.AppLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -41,7 +46,7 @@ import lombok.Setter;
  * @version 1.0
  */
 @Repository
-public class UserDaoImpl implements UserDao {
+public class UserDaoServiceImpl implements UserDaoService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     @Setter @Value("${spring.datasource.table}")

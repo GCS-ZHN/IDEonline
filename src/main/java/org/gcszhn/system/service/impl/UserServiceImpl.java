@@ -13,7 +13,7 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service;
+package org.gcszhn.system.service.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,18 +21,22 @@ import java.io.InputStream;
 import org.apache.logging.log4j.Level;
 import org.gcszhn.system.config.ConfigException;
 import org.gcszhn.system.config.JSONConfig;
+import org.gcszhn.system.service.MailService;
+import org.gcszhn.system.service.RedisService;
+import org.gcszhn.system.service.UserDaoService;
+import org.gcszhn.system.service.UserService;
+import org.gcszhn.system.service.obj.User;
+import org.gcszhn.system.service.obj.UserNode;
+import org.gcszhn.system.service.until.AppLog;
+import org.gcszhn.system.service.until.ProcessInteraction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import lombok.Getter;
-/**
- * 用户处理类，处理与User类相关的操作
- * @author Zhang.H.N
- * @version 1.0
- */
+
 @Service
-public class UserAffairs {
+public class UserServiceImpl implements UserService {
     /**Nginx配置模板 */
     @Value("${nginx.temp}")
     private String nginxTemp;
@@ -44,7 +48,7 @@ public class UserAffairs {
     private String nginxHost;
     /**DAO对象 */
     @Autowired @Getter
-    private UserDao userDao;
+    private UserDaoService userDao;
     @Autowired
     MailService mailService;
     /**Docker容器标签前缀 */
@@ -52,40 +56,30 @@ public class UserAffairs {
     /**配置docker容器标签前缀 */
     @Autowired
     public void setTagPrefix(JSONConfig jsonConfig) {
-        UserAffairs.tagPrefix = jsonConfig.getDockerConfig().getString("prefix");
+        UserServiceImpl.tagPrefix = jsonConfig.getDockerConfig().getString("prefix");
         if (tagPrefix == null) {
             throw new ConfigException("docker.prefix");
         }
     }
-    /**
-     * 创建用户
-     * @param account 用户名
-     * @param password 密码
-     * @param nodeConfigs 注册节点
-     * @return 用户对象
-     */
+    @Autowired
+    private RedisService redisService;
+    @Override
     public User createUser(String account, String password, UserNode... nodeConfigs) {
         User user = new User();
         user.setAccount(account);
         user.setPassword(password);
+        user.setRedisService(redisService);
         if (nodeConfigs != null) user.setNodeConfigs(nodeConfigs);
         return user;
     }
-    /**
-     * 修改密码
-     * @param user 待修改用户
-     * @param passwd 新密码
-     */
-    public void setPassword(User user, String passwd) {
+    @Override
+    public void setPassword(User user, String newpasswd) {
         if (userDao.verifyUser(user) == 0) {
-            user.setPassword(passwd);
+            user.setPassword(newpasswd);
             userDao.updateUser(user);
         }
     }
-    /**
-     * 创建并注册用户到服务器
-     * @param user 待注册用户
-     */
+    @Override
     public void registerAccount(User user) {
         if (userDao.verifyUser(user) != -1) {
             AppLog.printMessage("User has been register!", Level.ERROR);
@@ -128,11 +122,7 @@ public class UserAffairs {
             e.printStackTrace();
         }
     }
-
-    /**
-     * 销户
-     * @param user 待注销用户
-     */
+    @Override
     public void cancelAccount(User user) {
         if (userDao.verifyUser(user) != 0)
             return;
@@ -155,7 +145,7 @@ public class UserAffairs {
      */
     private void writeIntoNginx(User user) {
         try {
-            InputStream fis = UserAffairs.class.getResourceAsStream(nginxTemp);
+            InputStream fis = UserService.class.getResourceAsStream(nginxTemp);
             String temp = new String(fis.readAllBytes(), JSONConfig.DEFAULT_CHARSET);
             fis.close();
             temp = temp.replaceAll("\\$\\{USER\\}", user.getAccount());
@@ -180,7 +170,6 @@ public class UserAffairs {
             return;
         }
     }
-
     /**
      * 从Nginx上注销服务
      * @param user 待注销用户
@@ -197,9 +186,10 @@ public class UserAffairs {
             e.printStackTrace();
         }
     }
-    public void mailToAll(String subject, String tempfile, String contentType) {
+    @Override
+    public void sendMailToAll(String subject, String tempfile, String contentType) {
         try {
-            InputStream is = UserAffairs.class.getResourceAsStream(tempfile);
+            InputStream is = UserService.class.getResourceAsStream(tempfile);
             String content = new String(is.readAllBytes(), JSONConfig.DEFAULT_CHARSET);
             userDao.fetchUserList().forEach((User user)->{
                 if (user.getAddress()!=null) {

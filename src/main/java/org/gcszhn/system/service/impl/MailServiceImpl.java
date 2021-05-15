@@ -1,4 +1,19 @@
-package org.gcszhn.system.service;
+/*
+ * Copyright © 2021 <a href="mailto:zhang.h.n@foxmail.com">Zhang.H.N</a>.
+ *
+ * Licensed under the Apache License, Version 2.0 (thie "License");
+ * You may not use this file except in compliance with the license.
+ * You may obtain a copy of the License at
+ *
+ *       http://wwww.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language govering permissions and
+ * limitations under the License.
+ */
+package org.gcszhn.system.service.impl;
 
 import java.util.Properties;
 
@@ -16,11 +31,18 @@ import javax.mail.internet.MimeMessage;
 
 import org.apache.logging.log4j.Level;
 import org.gcszhn.system.config.JSONConfig;
+import org.gcszhn.system.service.MailService;
+import org.gcszhn.system.service.until.AppLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+/**
+ * 邮件服务接口扩展
+ * @author Zhang.H.N
+ * @version 1.0
+ */
 @Service
 public class MailServiceImpl implements MailService {
     /**邮件会话对象 */
@@ -93,14 +115,16 @@ public class MailServiceImpl implements MailService {
             msg.setContent(content, contentType);
             
             Transport.send(msg);
+            AppLog.printMessage("Send to " + toAddress +" successfully!");
         } catch (Exception e) {
+            AppLog.printMessage("Send to " + toAddress +" failed!", Level.ERROR);
             AppLog.printMessage(e.getMessage(), Level.ERROR);
         } finally {
             if (sent != null && sent.isOpen())
                 try {
                     sent.close(true);
                 } catch (MessagingException e) {
-                    e.printStackTrace();
+                    AppLog.printMessage(e.getMessage(), Level.ERROR);
                 }
         }
     }

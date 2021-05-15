@@ -13,7 +13,7 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service;
+package org.gcszhn.system.service.obj;
 
 import java.io.Serializable;
 
@@ -22,6 +22,7 @@ import com.alibaba.fastjson.JSONObject;
 
 import org.gcszhn.system.config.ConfigException;
 import org.gcszhn.system.config.JSONConfig;
+import org.gcszhn.system.service.until.SpringTools;
 
 /**
  * 注册节点类
@@ -90,6 +91,5 @@ public class UserNode implements Serializable {
         un.host = jsonObject.getIntValue("host");
         un.image = jsonObject.getString("image");
         return un;
-        
     }
 }

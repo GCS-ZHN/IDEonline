@@ -15,8 +15,8 @@
  */
 package org.gcszhn.server;
 
-import org.gcszhn.system.service.User;
-import org.gcszhn.system.service.UserAffairs;
+import org.gcszhn.system.service.UserService;
+import org.gcszhn.system.service.obj.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class Register {
     @Autowired
-    UserAffairs ua;
+    UserService ua;
     @GetMapping("/register")
     public User register(@RequestParam String ac, @RequestParam String pwd) {
         User user = ua.createUser(ac, pwd);

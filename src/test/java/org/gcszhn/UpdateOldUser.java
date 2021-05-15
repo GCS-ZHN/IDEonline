@@ -21,8 +21,8 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 import org.gcszhn.system.config.JSONConfig;
-import org.gcszhn.system.service.AppLog;
-import org.gcszhn.system.service.ProcessInteraction;
+import org.gcszhn.system.service.until.AppLog;
+import org.gcszhn.system.service.until.ProcessInteraction;
 
 /**
  * 用于将旧账号用户数据迁移到新版本。
