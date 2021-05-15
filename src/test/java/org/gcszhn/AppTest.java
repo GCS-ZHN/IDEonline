@@ -26,6 +26,7 @@ import org.gcszhn.system.service.ProcessInteraction;
 import org.gcszhn.system.service.RedisOperation;
 import org.gcszhn.system.service.User;
 import org.gcszhn.system.service.UserAffairs;
+import org.gcszhn.system.service.UserDao;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,16 +45,11 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Rollback(false)
     @Test
     public void testRegisterAccount() {
-        ua.registerAccount(ua.createUser("lumk", "lumk",  
-            new UserNode(4, true, false, new int[][]{
-                {49012, 8888},
-                {48012, 8067},
-                {47012, 8080}
-            }),
+        ua.registerAccount(ua.createUser("test1", "test1",  
             new UserNode(5, false, false, new int[][]{
-                {49012, 8888},
-                {48012, 8067},
-                {47012, 8080}
+                {49014, 8888},
+                {48014, 8067},
+                {47014, 8080}
             })
         ));
     }
@@ -81,7 +77,7 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Rollback(false)
     @Test
     public void testCancelAccount() {
-        ua.cancelAccount(ua.createUser("lumk", "lumk"));
+        ua.cancelAccount(ua.createUser("test1", "test1"));
     }
     /**
      * 本地命令测试
@@ -143,6 +139,26 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
         AppLog.printMessage("明文：" + mw);
         AppLog.printMessage("密文："+encryted.substring(0, 100)+"...");
         AppLog.printMessage("解密："+decrypted);
+    }
+    @Autowired
+    UserDao dao;
+    @Test
+    public void testFetchUser() {
+        dao.fetchUserList().forEach(
+            (User u)->{
+                if (!u.getAccount().equals("root")) {
+                    for (UserNode un: u.getNodeConfigs()) {
+                        try {
+                            ProcessInteraction.localExec(null, 
+                            String.format("docker -H 172.16.10.%d update MULTIPLE1.1-%s --memory=24g --memory-swap=24g", un.host, u.getAccount()).split(" ")
+                            );
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        );
     }
 }
 

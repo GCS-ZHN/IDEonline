@@ -91,14 +91,26 @@ public class UserAffairs {
         }
         try {
             for (UserNode nc : user.getNodeConfigs()) {
-                StringBuilder cmd = new StringBuilder("docker -H 172.16.10.").append(nc.host)
-                        .append(" run -d --privileged=").append(nc.withPrivilege).append(" --restart=always");
+                StringBuilder cmd = new StringBuilder("docker -H 172.16.10.")
+                    .append(nc.host)
+                    .append(" run -d --privileged=")
+                    .append(nc.withPrivilege)
+                    .append(" --restart=always")
+                    .append(" --memory=24g")
+                    .append(" --memory-swap=24g")
+                    ;
                 for (int[] portPair : nc.portMap) {
                     cmd.append(" -p ").append(portPair[0]).append(":").append(portPair[1]);
                 }
-                cmd.append(" -v /public/home/").append(user.getAccount()).append(":").append("/public/home/").append(user.getAccount())
-                        .append(" -v /public/packages:/public/packages").append(" --name ").append(tagPrefix)
-                        .append(user.getAccount());
+                cmd.append(" -v /public/home/")
+                    .append(user.getAccount())
+                    .append(":")
+                    .append("/public/home/")
+                    .append(user.getAccount())
+                    .append(" -v /public/packages:/public/packages")
+                    .append(" --name ")
+                    .append(tagPrefix)
+                    .append(user.getAccount());
 
                 if (nc.enableGPU) {
                     cmd.append(" --gpus all");
@@ -162,7 +174,7 @@ public class UserAffairs {
                 AppLog.printMessage("Register to nginx failed!", Level.ERROR);
             }, cmd);
         } catch (IOException | InterruptedException e) {
-            AppLog.printMessage("Nginx templete not found!", Level.ERROR);
+            AppLog.printMessage(e.getMessage(), Level.ERROR);
             return;
         }
     }

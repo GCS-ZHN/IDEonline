@@ -153,7 +153,29 @@ public class UserDaoImpl implements UserDao {
             AppLog.printMessage("Update user info failed!", Level.ERROR);
             throw new UDException(e);
         }
-
+    }
+    @Override
+    public List<User> fetchUserList() {
+        String sql = "SELECT username,nodeconfig FROM " +table;
+        List<Map<String, Object>> result = jdbcTemplate.queryForList(sql);
+        List<User> res = new ArrayList<>(result.size());
+        result.forEach((Map<String, Object> mp)->{
+            if (mp != null) {
+                User user = new User();
+                res.add(user);
+                user.setAccount((String)mp.get("username"));
+                String jsonString = (String)mp.get("nodeconfig");
+                if (jsonString != null && !jsonString.equals("")) {
+                    JSONArray jsonArray = JSONArray.parseArray(jsonString);
+                    ArrayList<UserNode> newSets = new ArrayList<>(jsonArray.size());
+                    for (int i = 0; i < jsonArray.size(); i++) {
+                        newSets.add(UserNode.getUserNodeFromJSON(jsonArray.getJSONObject(i)));
+                    }
+                    user.setNodeConfigs(newSets);
+                }
+            }
+        });
+        return res;
     }
     /**
      * 将密码生成带盐SHA256密文

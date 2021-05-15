@@ -15,6 +15,8 @@
  */
 package org.gcszhn.system.service;
 
+import java.util.List;
+
 /**
  * 用户数据处理的DAO接口
  * @author Zhang.H.N
@@ -45,4 +47,9 @@ public interface UserDao {
      * @param user object with user's new info such as password.
      */
     public void updateUser(User user);
+    /**
+     * fetch user list from database
+     * @return list object of user;
+     */
+    public List<User> fetchUserList();
 }
