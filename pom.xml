@@ -149,6 +149,9 @@
                     <exclude>config/application-prod.yml</exclude>
                     <exclude>config/application-test.yml</exclude>
                     <exclude>config/application.yml.public</exclude>
+                    <exclude>config/application-dev.yml.public</exclude>
+                    <exclude>config/application-prod.yml.public</exclude>
+                    <exclude>config/application-test.yml.public</exclude>
                     <exclude>config/settings.json.public</exclude>
                     <exclude>config/README.md</exclude>
                 </excludes>
