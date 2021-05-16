@@ -97,6 +97,14 @@
             <version>1.18.20</version>
             <scope>provided</scope>
         </dependency>
+        <!--Velocity模板引擎-->
+        <!-- https://mvnrepository.com/artifact/org.apache.velocity/velocity -->
+        <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity</artifactId>
+            <version>1.7</version>
+        </dependency>
+
     </dependencies>
     <profiles>
         <profile>

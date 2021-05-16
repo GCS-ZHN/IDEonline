@@ -17,13 +17,14 @@ package org.gcszhn;
 
 import java.io.IOException;
 
+import org.apache.velocity.VelocityContext;
 import org.gcszhn.system.security.RSAEncrypt;
 import org.gcszhn.system.service.MailService;
 import org.gcszhn.system.service.RedisService;
 import org.gcszhn.system.service.UserDaoService;
 import org.gcszhn.system.service.UserService;
+import org.gcszhn.system.service.VelocityService;
 import org.gcszhn.system.service.obj.User;
-import org.gcszhn.system.service.obj.UserNode;
 import org.gcszhn.system.service.until.AppLog;
 import org.gcszhn.system.service.until.ProcessInteraction;
 import org.junit.Test;
@@ -52,13 +53,7 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Rollback(false)
     @Test
     public void testRegisterAccount() {
-        ua.registerAccount(ua.createUser("test5", "test5",  
-            new UserNode(5, false, false, new int[][]{
-                {49014, 8888},
-                {48014, 8067},
-                {47014, 8080}
-            })
-        ));
+        ua.registerAccount(ua.createUser("test5", "test5", null));
     }
     /**
      * 修改密码测试
@@ -66,7 +61,7 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Rollback(false)
     @Test
     public void testSetPassowrd() {
-        User user = ua.createUser("test5", "test5");
+        User user = ua.createUser("test5", "test5", null);
         ua.setPassword(user, "test6");
     }
     /**
@@ -75,7 +70,7 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Rollback(false)
     @Test
     public void testCancelAccount() {
-        ua.cancelAccount(ua.createUser("test5", "test6"));
+        ua.cancelAccount(ua.createUser("test5", "test6", null));
     }
     /**
      * 本地命令测试
@@ -140,6 +135,10 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
         AppLog.printMessage("密文："+encryted.substring(0, 100)+"...");
         AppLog.printMessage("解密："+decrypted);
     }
+    /**
+     * 用户获取测试
+     */
+    @Test
     public void testFetchUser() {
         dao.fetchUserList().forEach(
             (User u)->{
@@ -147,12 +146,31 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
             }
         );
     }
+    /**
+     * velocity模板引擎测试
+     */
+    @Autowired
+    VelocityService vs;
+    @Test
+    public void testVelocity() {
+        VelocityContext context = new VelocityContext();
+        User user = ua.createUser("test", "123456", "test@163.com");
+        context.put("user", user);
+        System.out.println(vs.getResult("mail.vm", context));
+    }
+    /**
+     * 邮件群发测试
+     */
     @Autowired
     MailService ms;
+    @Test
     public void testMail() {
-       ua.sendMailToAll("System update of IDRB IDEonline", 
-        "/config/mail.temp",
+        User user = ua.createUser("test", "no", "zhang.h.n@foxmail.com");
+        ua.registerAccount(user);
+        ua.sendMailToAll("System update of IDRB IDEonline", 
+        "mail.vm",
         "text/html;charset=UTF-8");
+        ua.cancelAccount(user);
     }
 }
 

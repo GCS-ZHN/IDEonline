@@ -31,7 +31,7 @@ public interface UserService {
      * @param nodeConfigs 注册节点
      * @return 用户对象
      */
-    public User createUser(String account, String password, UserNode... nodeConfigs);
+    public User createUser(String account, String password, String address, UserNode... nodeConfigs);
     /**
      * 修改密码
      * @param user 待修改用户

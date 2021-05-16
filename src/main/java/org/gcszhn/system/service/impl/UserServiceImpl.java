@@ -19,18 +19,21 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.logging.log4j.Level;
+import org.apache.velocity.VelocityContext;
 import org.gcszhn.system.config.ConfigException;
 import org.gcszhn.system.config.JSONConfig;
 import org.gcszhn.system.service.MailService;
 import org.gcszhn.system.service.RedisService;
 import org.gcszhn.system.service.UserDaoService;
 import org.gcszhn.system.service.UserService;
+import org.gcszhn.system.service.VelocityService;
 import org.gcszhn.system.service.obj.User;
 import org.gcszhn.system.service.obj.UserNode;
 import org.gcszhn.system.service.until.AppLog;
 import org.gcszhn.system.service.until.ProcessInteraction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import lombok.Getter;
@@ -49,8 +52,12 @@ public class UserServiceImpl implements UserService {
     /**DAO对象 */
     @Autowired @Getter
     private UserDaoService userDao;
+    /**邮件服务 */
     @Autowired
     MailService mailService;
+    /**模板引擎服务 */
+    @Autowired
+    VelocityService velocityService;
     /**Docker容器标签前缀 */
     private static String tagPrefix;
     /**配置docker容器标签前缀 */
@@ -64,10 +71,11 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private RedisService redisService;
     @Override
-    public User createUser(String account, String password, UserNode... nodeConfigs) {
+    public User createUser(String account, String password, String address, UserNode... nodeConfigs) {
         User user = new User();
         user.setAccount(account);
         user.setPassword(password);
+        user.setAddress(address);
         user.setRedisService(redisService);
         if (nodeConfigs != null) user.setNodeConfigs(nodeConfigs);
         return user;
@@ -186,17 +194,18 @@ public class UserServiceImpl implements UserService {
             e.printStackTrace();
         }
     }
+    @Async
     @Override
-    public void sendMailToAll(String subject, String tempfile, String contentType) {
+    public void sendMailToAll(String subject, String vmfile, String contentType) {
         try {
-            InputStream is = UserService.class.getResourceAsStream(tempfile);
-            String content = new String(is.readAllBytes(), JSONConfig.DEFAULT_CHARSET);
             userDao.fetchUserList().forEach((User user)->{
                 if (user.getAddress()!=null) {
+                    VelocityContext context = new VelocityContext();
+                    context.put("user", user);
                     mailService.sendMail(
                         user.getAddress(), 
                         subject,
-                        content.replace("${username}", user.getAccount()), 
+                        velocityService.getResult(vmfile, context), 
                         contentType
                     );
                 }
