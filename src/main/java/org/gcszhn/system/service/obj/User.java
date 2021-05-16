@@ -79,7 +79,7 @@ public class User implements HttpSessionBindingListener, Serializable {
     public boolean isContainNode(int node) {
         if (nodeConfigs == null) return false;
         for (UserNode nc : nodeConfigs) {
-            if (node == nc.host)
+            if (node == nc.getHost())
                 return true;
         }
         return false;

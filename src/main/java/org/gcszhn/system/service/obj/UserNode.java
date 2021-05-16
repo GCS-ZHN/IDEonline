@@ -24,24 +24,26 @@ import org.gcszhn.system.config.ConfigException;
 import org.gcszhn.system.config.JSONConfig;
 import org.gcszhn.system.service.until.SpringTools;
 
+import lombok.Getter;
+
 /**
  * 注册节点类
  * @author Zhang.H.N
- * @version 1.0
+ * @version 1.1
  */
 public class UserNode implements Serializable {
     /**序列化ID */
     public static final long serialVersionUID = 202104261748L;
     /**使用节点 */
-    public int host;
+    private @Getter int host;
     /**是否启用GPU，仅对含GPU节点有效 */
-    public boolean enableGPU = false;
+    private @Getter boolean enableGPU = false;
     /**使用镜像 */
-    public String image;
+    private @Getter String image;
     /**是否赋予最大权限 */
-    public boolean withPrivilege = false;
+    private @Getter boolean withPrivilege = false;
     /**端口映射 */
-    public int[][] portMap;
+    private @Getter int[][] portMap;
     /**
      * 节点配置构造方法
      * @param hostIndex 使用节点的节点列表索引

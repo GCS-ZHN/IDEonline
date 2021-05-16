@@ -16,6 +16,9 @@
 package org.gcszhn;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 import org.apache.velocity.VelocityContext;
 import org.gcszhn.system.security.RSAEncrypt;
@@ -25,6 +28,8 @@ import org.gcszhn.system.service.UserDaoService;
 import org.gcszhn.system.service.UserService;
 import org.gcszhn.system.service.VelocityService;
 import org.gcszhn.system.service.obj.User;
+import org.gcszhn.system.service.obj.UserMail;
+import org.gcszhn.system.service.obj.UserNode;
 import org.gcszhn.system.service.until.AppLog;
 import org.gcszhn.system.service.until.ProcessInteraction;
 import org.junit.Test;
@@ -53,7 +58,16 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Rollback(false)
     @Test
     public void testRegisterAccount() {
-        ua.registerAccount(ua.createUser("test5", "test5", null));
+        ua.registerAccount(ua.createUser("test5", "test5", "zhanghn@zju.edu.cn",
+            new UserNode(4, true, false, new int[][]{
+                {49020, 8888},
+                {48020, 8067}
+            }),
+            new UserNode(5, false, false, new int[][]{
+                {49020, 8888},
+                {48020, 8067}
+            })
+        ));
     }
     /**
      * 修改密码测试
@@ -70,7 +84,7 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Rollback(false)
     @Test
     public void testCancelAccount() {
-        ua.cancelAccount(ua.createUser("test5", "test6", null));
+        ua.cancelAccount(ua.createUser("test5", "test5", null));
     }
     /**
      * 本地命令测试
@@ -159,18 +173,50 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
         System.out.println(vs.getResult("mail.vm", context));
     }
     /**
-     * 邮件群发测试
+     * 单用户邮件测试
      */
     @Autowired
     MailService ms;
     @Test
     public void testMail() {
         User user = ua.createUser("test", "no", "zhang.h.n@foxmail.com");
-        ua.registerAccount(user);
-        ua.sendMailToAll("System update of IDRB IDEonline", 
-        "mail.vm",
-        "text/html;charset=UTF-8");
-        ua.cancelAccount(user);
+        ua.sendMail(user, new UserMail(
+            "Java Test",
+            "mail.vm",
+            "text/html;charset=UTF-8",
+            (User u)->{
+                DateFormat df = DateFormat.getDateInstance(DateFormat.LONG, Locale.CHINA);
+                VelocityContext context = new VelocityContext();
+                context.put("user", u);
+                context.put("date", df.format(new Date()));
+                return context;
+            })
+        );
+    }
+    /**邮件群发测试 */
+    @Test
+    public void testMailToAll() {
+        User user1 = ua.createUser("test1", "no", "zhang.h.n@foxmail.com");
+        User user2 = ua.createUser("test2", "no", "zhanghn@zju.edu.cn");
+        User user3 = ua.createUser("test3", "no", "zhang2016@zju.edu.cn");
+        ua.registerAccount(user1);
+        ua.registerAccount(user2);
+        ua.registerAccount(user3);
+        ua.sendMailToAll(new UserMail(
+            "Java Test",
+            "mail.vm",
+            "text/html;charset=UTF-8",
+            (User u)->{
+                DateFormat df = DateFormat.getDateInstance(DateFormat.LONG, Locale.CHINA);
+                VelocityContext context = new VelocityContext();
+                context.put("user", u);
+                context.put("date", df.format(new Date()));
+                return context;
+            })
+        );
+        ua.cancelAccount(user1);
+        ua.cancelAccount(user2);
+        ua.cancelAccount(user3);
     }
 }
 

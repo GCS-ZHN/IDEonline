@@ -27,8 +27,8 @@ public class Register {
     @Autowired
     UserService ua;
     @GetMapping("/register")
-    public User register(@RequestParam String ac, @RequestParam String pwd) {
-        User user = ua.createUser(ac, pwd);
+    public User register(@RequestParam String ac, @RequestParam String pwd, @RequestParam String address) {
+        User user = ua.createUser(ac, pwd, address);
         ua.registerAccount(user);
         return user;
     }

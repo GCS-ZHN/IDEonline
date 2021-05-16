@@ -16,12 +16,13 @@
 package org.gcszhn.system.service;
 
 import org.gcszhn.system.service.obj.User;
+import org.gcszhn.system.service.obj.UserMail;
 import org.gcszhn.system.service.obj.UserNode;
 
 /**
  * 用户处理类，处理与User类相关的操作
  * @author Zhang.H.N
- * @version 1.0
+ * @version 1.1
  */
 public interface UserService {
     /**
@@ -49,10 +50,14 @@ public interface UserService {
      */
     public void cancelAccount(User user);
     /**
-     * 向全体带有邮箱的注册用户发送邮件
-     * @param subject 主题
-     * @param tempfile 邮件模板
-     * @param contentType MINE格式类型
+     * 向特定用户发送特定邮件
+     * @param user 用户名
+     * @param userMail 用户邮件配置
      */
-    public void sendMailToAll(String subject, String tempfile, String contentType);
+    public void sendMail(User user, UserMail userMail);
+    /**
+     * 向全体带有邮箱的注册用户发送邮件
+     * @param userMail 用户邮件配置
+     */
+    public void sendMailToAll(UserMail userMail);
 }

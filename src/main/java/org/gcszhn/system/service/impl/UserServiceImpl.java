@@ -16,7 +16,6 @@
 package org.gcszhn.system.service.impl;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 import org.apache.logging.log4j.Level;
 import org.apache.velocity.VelocityContext;
@@ -28,6 +27,7 @@ import org.gcszhn.system.service.UserDaoService;
 import org.gcszhn.system.service.UserService;
 import org.gcszhn.system.service.VelocityService;
 import org.gcszhn.system.service.obj.User;
+import org.gcszhn.system.service.obj.UserMail;
 import org.gcszhn.system.service.obj.UserNode;
 import org.gcszhn.system.service.until.AppLog;
 import org.gcszhn.system.service.until.ProcessInteraction;
@@ -38,6 +38,11 @@ import org.springframework.stereotype.Service;
 
 import lombok.Getter;
 
+/**
+ * 用户服务接口扩展类
+ * @author Zhang.H.N
+ * @version 1.1
+ */
 @Service
 public class UserServiceImpl implements UserService {
     /**Nginx配置模板 */
@@ -96,14 +101,14 @@ public class UserServiceImpl implements UserService {
         try {
             for (UserNode nc : user.getNodeConfigs()) {
                 StringBuilder cmd = new StringBuilder("docker -H 172.16.10.")
-                    .append(nc.host)
+                    .append(nc.getHost())
                     .append(" run -d --privileged=")
-                    .append(nc.withPrivilege)
+                    .append(nc.isWithPrivilege())
                     .append(" --restart=always")
                     .append(" --memory=24g")
                     .append(" --memory-swap=24g")
                     ;
-                for (int[] portPair : nc.portMap) {
+                for (int[] portPair : nc.getPortMap()) {
                     cmd.append(" -p ").append(portPair[0]).append(":").append(portPair[1]);
                 }
                 cmd.append(" -v /public/home/")
@@ -116,12 +121,12 @@ public class UserServiceImpl implements UserService {
                     .append(tagPrefix)
                     .append(user.getAccount());
 
-                if (nc.enableGPU) {
+                if (nc.isEnableGPU()) {
                     cmd.append(" --gpus all");
                 }
-                cmd.append(" ").append(nc.image).append(" ").append(user.getAccount());
+                cmd.append(" ").append(nc.getImage()).append(" ").append(user.getAccount());
                 ProcessInteraction.localExec((Process p) -> {
-                    AppLog.printMessage("Register successfully at node " + nc.host);
+                    AppLog.printMessage("Register successfully at node " + nc.getHost());
                 }, cmd.toString().split(" "));
             }
             userDao.addUser(user);
@@ -136,9 +141,9 @@ public class UserServiceImpl implements UserService {
             return;
         try {
             for (UserNode nc : user.getNodeConfigs()) {
-                String cmd = "docker -H 172.16.10." + nc.host + " rm -fv " + tagPrefix + user.getAccount();
+                String cmd = "docker -H 172.16.10." + nc.getHost() + " rm -fv " + tagPrefix + user.getAccount();
                 ProcessInteraction.localExec((Process p) -> {
-                    AppLog.printMessage("Degister successfully at node " + nc.host);
+                    AppLog.printMessage("Degister successfully at node " + nc.getHost());
                 }, cmd.split(" "));
             }
             userDao.removeUser(user);
@@ -153,20 +158,28 @@ public class UserServiceImpl implements UserService {
      */
     private void writeIntoNginx(User user) {
         try {
-            InputStream fis = UserService.class.getResourceAsStream(nginxTemp);
-            String temp = new String(fis.readAllBytes(), JSONConfig.DEFAULT_CHARSET);
-            fis.close();
-            temp = temp.replaceAll("\\$\\{USER\\}", user.getAccount());
-            String vscodeConf = "";
-            String jupyterConf = "";
-            for (UserNode nc : user.getNodeConfigs()) {
-                jupyterConf += temp.replaceAll("\\$\\{NODE\\}", nc.host + "").replaceAll("\\$\\{PORT\\}",
-                        nc.portMap[0][0] + "") + "\n";
-                vscodeConf += temp.replaceAll("\\$\\{NODE\\}", nc.host + "").replaceAll("\\$\\{PORT\\}",
-                        nc.portMap[1][0] + "") + "\n";
-            }
-            String cmd = String.format("echo '%s' > %s/jupyter/%s.conf", jupyterConf, nginxConfDir, user.getAccount());
-            cmd += String.format(" && echo '%s' > %s/vscode/%s.conf", vscodeConf, nginxConfDir, user.getAccount());
+            VelocityContext context = new VelocityContext();
+            context.put("user", user);
+
+            //生成jupyter nginx配置
+            context.put("jupyter", true);
+            String jupyterConf = velocityService.getResult(nginxTemp, context);
+
+            //生成vscode nginx配置
+            context.put("jupyter", false);
+            String vscodeConf = velocityService.getResult(nginxTemp, context);
+
+            //执行远程配置命令
+            String cmd = String.format(
+                "echo '%s' > %s/jupyter/%s.conf", 
+                jupyterConf, 
+                nginxConfDir, 
+                user.getAccount());
+            cmd += String.format(
+                " && echo '%s' > %s/vscode/%s.conf", 
+                vscodeConf, 
+                nginxConfDir, 
+                user.getAccount());
             cmd += " && nginx -s reload";
             ProcessInteraction.remoteExec(nginxHost, "idrb@sugon", true, (Process p) -> {
                 AppLog.printMessage("Register to nginx successfully!");
@@ -194,20 +207,28 @@ public class UserServiceImpl implements UserService {
             e.printStackTrace();
         }
     }
+    @Async //异步发送，防止服务阻塞
+    @Override
+    public void sendMail(User user, UserMail userMail) {
+        try {
+            mailService.sendMail(
+                user.getAddress(),                            //邮件地址
+                userMail.getSubject(),                        //邮件主题
+                velocityService.getResult(                    //模板过滤
+                    userMail.getVmfile(),                     //模板文件
+                    userMail.getInitContext().apply(user)),   //模板变量自定义处理
+                userMail.getContentType());                   //邮件MINE类型
+        } catch (Exception e) {
+            AppLog.printMessage(e.getMessage(), Level.ERROR);
+        }
+    }
     @Async
     @Override
-    public void sendMailToAll(String subject, String vmfile, String contentType) {
+    public void sendMailToAll(UserMail userMail) {
         try {
             userDao.fetchUserList().forEach((User user)->{
                 if (user.getAddress()!=null) {
-                    VelocityContext context = new VelocityContext();
-                    context.put("user", user);
-                    mailService.sendMail(
-                        user.getAddress(), 
-                        subject,
-                        velocityService.getResult(vmfile, context), 
-                        contentType
-                    );
+                    sendMail(user, userMail);
                 }
             });
         } catch (Exception e) {

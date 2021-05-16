@@ -73,8 +73,10 @@ public class Validation {
             try {
                 if ((keypair instanceof String[])) {
                     String[] keys = (String[]) keypair;
-                    User user = ua.createUser(account, 
-                       RSAEncrypt.decryptToString(passwd, keys[0]));
+                    User user = ua.createUser(
+                        account, 
+                       RSAEncrypt.decryptToString(passwd, keys[0]), 
+                       null);
 
                     status = userDaoService.verifyUser(user);
                     //密码必须正确才能更新节点属性

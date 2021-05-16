@@ -6,7 +6,7 @@
 
     <groupId>org.gcszhn</groupId>
     <artifactId>IDEonline</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <packaging>jar</packaging>
 
     <name>IDEonline</name>
@@ -227,6 +227,7 @@
                             <exclude>**/*.md</exclude>
                             <exclude>**/*.xml</exclude>
                             <exclude>**/*.txt</exclude>
+                            <exclude>**/*.vm</exclude>
                         </excludes>
                         <!--严格检查-->
                         <strictCheck>true</strictCheck>

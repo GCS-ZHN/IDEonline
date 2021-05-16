@@ -1,4 +1,0 @@
-if ( $user_node = "${USER}-${NODE}") {
-    proxy_pass http://172.16.10.${NODE}:${PORT}$true_uri;
-    break;
-}
