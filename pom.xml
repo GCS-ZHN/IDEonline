@@ -98,7 +98,29 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
-
+    <profiles>
+        <profile>
+            <id>dev</id>
+            <properties>
+                <profileActive>dev</profileActive>
+            </properties>
+        </profile>
+        <profile>
+            <id>test</id>
+            <properties>
+                <profileActive>test</profileActive>
+            </properties>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+        <profile>
+            <id>prod</id>
+            <properties>
+                <profileActive>prod</profileActive>
+            </properties>
+        </profile>
+    </profiles>
     <build>
         <!--Source and dist configuration-->
         <sourceDirectory>src/main/java</sourceDirectory>
@@ -110,6 +132,28 @@
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
+                <!--被打包文件进行EL表达式替换-->
+                <filtering>true</filtering>
+                <!--打包时排除下列文件-->
+                <excludes>
+                    <exclude>config/application.yml</exclude>
+                    <exclude>config/application-dev.yml</exclude>
+                    <exclude>config/application-prod.yml</exclude>
+                    <exclude>config/application-test.yml</exclude>
+                    <exclude>config/application.yml.public</exclude>
+                    <exclude>config/settings.json.public</exclude>
+                    <exclude>config/README.md</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <!--被打包文件进行EL表达式替换-->
+                <filtering>true</filtering>
+                <!--打包时包含下列文件-->
+                <includes>
+                    <include>config/application.yml</include>
+                    <include>config/application-${profileActive}.yml</include>
+                </includes>
             </resource>
         </resources>
 
@@ -174,6 +218,7 @@
                             <exclude>.gitignore</exclude>
                             <exclude>**/*.md</exclude>
                             <exclude>**/*.xml</exclude>
+                            <exclude>**/*.txt</exclude>
                         </excludes>
                         <!--严格检查-->
                         <strictCheck>true</strictCheck>
