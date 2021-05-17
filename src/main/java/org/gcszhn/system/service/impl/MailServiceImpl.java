@@ -130,16 +130,19 @@ public class MailServiceImpl implements MailService {
     }
     @Override
     public Folder readMailFolder(String mailfolder, int openModel) {
+        Folder inbox = null;
         try {
-            Folder inbox = store.getFolder(mailfolder);
+            connection();
+            inbox = store.getFolder(mailfolder);
             inbox.open(openModel);
             System.out.println("You have " + inbox.getMessageCount() + " emails in " + mailfolder);
             System.out.println("You have " + inbox.getUnreadMessageCount() + " unread emails in " + mailfolder);
-            return inbox;
         } catch (MessagingException e) {
-            e.printStackTrace();
-            return null;
+            AppLog.printMessage(e.getMessage(), Level.ERROR);
+        } finally {
+            close();
         }
+        return inbox;
     }
     @Override
     public Folder readInbox(int openModel) {
