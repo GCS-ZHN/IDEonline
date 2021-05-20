@@ -8,3 +8,9 @@
 
 </div>
 这是一个基于Spring Boot和Spring MVC开发的IDRB实验室在线平台IDEonline的后台管理系统。涉及nginx、mysql、redis和docker等。
+
+# 优化计划
+- 容器闲置超时，自动关闭容器。下次访问时重新启动。
+- 优化Nginx+Lua+Redis的访问。
+- 搭建管理员平台。
+- 搭建帮助。
