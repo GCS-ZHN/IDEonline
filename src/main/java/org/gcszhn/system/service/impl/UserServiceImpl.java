@@ -63,6 +63,7 @@ public class UserServiceImpl implements UserService {
     @Autowired
     VelocityService velocityService;
     /**Docker容器标签前缀 */
+    @Getter
     private static String tagPrefix;
     /**配置docker容器标签前缀 */
     @Autowired
@@ -103,7 +104,7 @@ public class UserServiceImpl implements UserService {
                     .append(nc.getHost())
                     .append(" run -d --privileged=")
                     .append(nc.isWithPrivilege())
-                    .append(" --restart=always")
+                    .append(" --restart=no")
                     .append(" --memory=24g")
                     .append(" --memory-swap=24g")
                     ;

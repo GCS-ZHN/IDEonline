@@ -22,7 +22,10 @@ import org.gcszhn.system.security.RSAEncrypt;
 import org.gcszhn.system.security.RSAEncryptException;
 import org.gcszhn.system.service.UserDaoService;
 import org.gcszhn.system.service.UserService;
+import org.gcszhn.system.service.impl.UserServiceImpl;
 import org.gcszhn.system.service.obj.User;
+import org.gcszhn.system.service.until.AppLog;
+import org.gcszhn.system.service.until.ProcessInteraction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -85,13 +88,19 @@ public class Validation {
                         valSession.invalidate(); //必须验证通过才失效，否则二次输入密码必须重新打开页面
                         user.setAliveNode(Integer.parseInt(node));
                         HttpSession session = request.getSession();
+                        String cmd = "docker -H 172.16.10." 
+                            + user.getAliveNode()
+                            + " start " + UserServiceImpl.getTagPrefix() + user.getAccount();
+                        ProcessInteraction.localExec((Process p) -> {
+                            AppLog.printMessage("Start container successfully at node " + user.getAliveNode());
+                        }, cmd.toString().split(" "));
                         session.setAttribute("user", user);//绑定用户，写入Redis
                         session.setMaxInactiveInterval(3600*24);//会话有效期为1天
                     }
                 } else {
                     status = 4;
                 }
-            } catch (RSAEncryptException e) {
+            } catch (Exception e) {
                 status = 4;
             }
         }
