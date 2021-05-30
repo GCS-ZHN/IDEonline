@@ -18,7 +18,6 @@ package org.gcszhn.system.service.impl;
 import java.io.IOException;
 
 import org.apache.logging.log4j.Level;
-import org.apache.velocity.VelocityContext;
 import org.gcszhn.system.config.ConfigException;
 import org.gcszhn.system.config.JSONConfig;
 import org.gcszhn.system.service.MailService;
@@ -130,7 +129,7 @@ public class UserServiceImpl implements UserService {
                 }, cmd.toString().split(" "));
             }
             userDao.addUser(user);
-            writeIntoNginx(user);
+            //writeIntoNginx(user);
         } catch (InterruptedException | IOException  e) {
             e.printStackTrace();
         }
@@ -147,63 +146,7 @@ public class UserServiceImpl implements UserService {
                 }, cmd.split(" "));
             }
             userDao.removeUser(user);
-            removeFromNginx(user);
         } catch (InterruptedException | IOException e) {
-            e.printStackTrace();
-        }
-    }
-    /**
-     * 向Nginx注册
-     * @param 待注册用户
-     */
-    private void writeIntoNginx(User user) {
-        try {
-            VelocityContext context = new VelocityContext();
-            context.put("user", user);
-
-            //生成jupyter nginx配置
-            context.put("jupyter", true);
-            String jupyterConf = velocityService.getResult(nginxTemp, context);
-
-            //生成vscode nginx配置
-            context.put("jupyter", false);
-            String vscodeConf = velocityService.getResult(nginxTemp, context);
-
-            //执行远程配置命令
-            String cmd = String.format(
-                "echo '%s' > %s/jupyter/%s.conf", 
-                jupyterConf, 
-                nginxConfDir, 
-                user.getAccount());
-            cmd += String.format(
-                " && echo '%s' > %s/vscode/%s.conf", 
-                vscodeConf, 
-                nginxConfDir, 
-                user.getAccount());
-            cmd += " && nginx -s reload";
-            ProcessInteraction.remoteExec(nginxHost, "idrb@sugon", true, (Process p) -> {
-                AppLog.printMessage("Register to nginx successfully!");
-            }, (Process p) -> {
-                AppLog.printMessage("Register to nginx failed!", Level.ERROR);
-            }, cmd);
-        } catch (IOException | InterruptedException e) {
-            AppLog.printMessage(e.getMessage(), Level.ERROR);
-            return;
-        }
-    }
-    /**
-     * 从Nginx上注销服务
-     * @param user 待注销用户
-     */
-    private void removeFromNginx(User user) {
-        try {
-            ProcessInteraction.remoteExec( nginxHost, "idrb@sugon", true, (Process p) -> {
-                AppLog.printMessage("Degister from nginx successfully");
-            }, (Process p) -> {
-                AppLog.printMessage("Degister from nginx failed", Level.ERROR);
-            }, String.format("cd %s && rm -rf jupyter/%s.conf vscode/%s.conf && nginx -s reload", nginxConfDir, user.getAccount(),
-                    user.getAccount()));
-        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }

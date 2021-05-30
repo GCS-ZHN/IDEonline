@@ -29,7 +29,6 @@ import org.gcszhn.system.service.UserService;
 import org.gcszhn.system.service.VelocityService;
 import org.gcszhn.system.service.obj.User;
 import org.gcszhn.system.service.obj.UserMail;
-import org.gcszhn.system.service.obj.UserNode;
 import org.gcszhn.system.service.until.AppLog;
 import org.gcszhn.system.service.until.ProcessInteraction;
 import org.junit.Test;

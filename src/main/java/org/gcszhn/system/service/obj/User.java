@@ -95,12 +95,24 @@ public class User implements HttpSessionBindingListener, Serializable {
     /** 登录时用户被绑定到会话，同时写入Redis缓存 */
     @Override
     public void valueBound(HttpSessionBindingEvent event) {
+        UserNode current = null;
+        for (UserNode un: nodeConfigs) {
+            if (un.getHost() == aliveNode) {
+                current = un;
+                break;
+            }
+        }
+        if (current == null) return;
         try {
+            String portset = "";
+            for (int[] portpair: current.getPortMap()) {
+                portset += (":" + portpair[0]);
+            }
             redisService.redisHset(
                 "session", 
                 event.getSession().getId(), 
-                account + "-" + aliveNode);
-        } catch (NullPointerException e) {
+                aliveNode + portset);
+        } catch (Exception e) {
             AppLog.printMessage(e.getMessage(), Level.ERROR);
         }
     }
@@ -109,8 +121,11 @@ public class User implements HttpSessionBindingListener, Serializable {
     public void valueUnbound(HttpSessionBindingEvent event) {
         try {
             redisService.redisHdel("session", event.getSession().getId());
+            redisService.redisHdel("session", event.getSession().getId()+"-"+"vscode");
+            redisService.redisHdel("session", event.getSession().getId()+"-"+"jupyter");
         } catch (NullPointerException e) {
             AppLog.printMessage(e.getMessage(), Level.ERROR);
+            
         }
     }
 }
