@@ -16,20 +16,24 @@
 package org.gcszhn;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import com.github.dockerjava.api.DockerClient;
+
 import org.apache.velocity.VelocityContext;
 import org.gcszhn.system.security.RSAEncrypt;
+import org.gcszhn.system.service.DockerService;
 import org.gcszhn.system.service.MailService;
 import org.gcszhn.system.service.RedisService;
 import org.gcszhn.system.service.UserDaoService;
 import org.gcszhn.system.service.UserService;
 import org.gcszhn.system.service.VelocityService;
+import org.gcszhn.system.service.impl.DockerServiceImpl;
 import org.gcszhn.system.service.impl.UserServiceImpl;
+import org.gcszhn.system.service.obj.DockerContainerConfig;
 import org.gcszhn.system.service.obj.User;
 import org.gcszhn.system.service.obj.UserMail;
 import org.gcszhn.system.service.until.AppLog;
@@ -55,6 +59,8 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     UserService ua;
     @Autowired
     UserDaoService dao;
+    @Autowired
+    DockerService dockerService;
     /**
      * 账号注册测试
      */
@@ -231,6 +237,26 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
                 }
             }
         }, ("docker -H "+ UserServiceImpl.getDomain()+ ".41 start MULTIPLE1.1-lumk").split(" "));
+    }
+    @Test
+    public void testDockerService() {
+        DockerClient client = dockerService.creatClient(
+            "172.16.10.41", 2375, DockerServiceImpl.getDefaultApiVersion());
+        DockerContainerConfig config = new DockerContainerConfig(
+            "zhanghn/multiple:v1.1", "MULTIPLE1.1-test", true)
+            .withGPU(new int[]{})
+            .withMemoryLimit(24L<<30)
+            .withPortBindings(new int[][]{
+                {43002, 8888},
+                {43001, 8067},
+                {43000, 8080}
+            })
+            .withVolumeBindings(
+                "/public/home/test:/public/home/test",
+                "/public/packages:/public/packages"
+            );
+        //dockerService.createContainer(client,config);
+        dockerService.deleteContainer(client, "MULTIPLE1.1-test");
     }
 }
 
