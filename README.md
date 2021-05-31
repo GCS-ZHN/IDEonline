@@ -13,6 +13,7 @@
 - 容器闲置超时，自动关闭容器。下次访问时重新启动。
 - 优化Nginx+Lua+Redis的访问。
   - 将redis访问返回信息改为对应的IP+port。使用resty/redis模块和access_by_lua_file指令。
+- 引入docker-java替代docker命令行，建立dockerService
 - 搭建管理员平台。
 - 搭建帮助。
 

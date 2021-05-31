@@ -45,7 +45,7 @@ public class User implements HttpSessionBindingListener, Serializable {
     private String address;
     /**活跃节点 */
     @Getter
-    private int aliveNode = -1;
+    private UserNode aliveNode = null;
     /**注册节点列表 */
     @Getter
     private ArrayList<UserNode> nodeConfigs = new ArrayList<>(2);
@@ -71,47 +71,31 @@ public class User implements HttpSessionBindingListener, Serializable {
     @Setter
     private RedisService redisService;
     /**
-     * 检查是否含有指定节点
-     * 
-     * @param node 节点id
-     * @return true代表含有节点，false代表不含有节点
-     */
-    public boolean isContainNode(int node) {
-        if (nodeConfigs == null) return false;
-        for (UserNode nc : nodeConfigs) {
-            if (node == nc.getHost())
-                return true;
-        }
-        return false;
-    }
-    /**
      * 设置当前登录节点号
      * @param 节点主机号，必须是用户注册过的节点，否则无效
      */
     public void setAliveNode(int aliveNode) {
-        if (isContainNode(aliveNode))
-            this.aliveNode = aliveNode;
+        for (UserNode nc : getNodeConfigs()) {
+            if (aliveNode == nc.getHost()){
+                this.aliveNode = nc;
+                break;
+            }
+        }
     }
     /** 登录时用户被绑定到会话，同时写入Redis缓存 */
     @Override
     public void valueBound(HttpSessionBindingEvent event) {
-        UserNode current = null;
-        for (UserNode un: nodeConfigs) {
-            if (un.getHost() == aliveNode) {
-                current = un;
-                break;
-            }
-        }
-        if (current == null) return;
+        if (getAliveNode() == null) return;
         try {
             String portset = "";
-            for (int[] portpair: current.getPortMap()) {
+            for (int[] portpair: getAliveNode().getPortMap()) {
                 portset += (":" + portpair[0]);
             }
             redisService.redisHset(
                 "session", 
                 event.getSession().getId(), 
-                aliveNode + portset);
+                getAliveNode().getHost() + portset);
+            AppLog.printMessage("Add user to redis with session successfully");
         } catch (Exception e) {
             AppLog.printMessage(e.getMessage(), Level.ERROR);
         }

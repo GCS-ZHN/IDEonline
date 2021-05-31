@@ -15,18 +15,24 @@
  */
 package org.gcszhn.server;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.apache.logging.log4j.Level;
 import org.gcszhn.system.security.RSAEncrypt;
-import org.gcszhn.system.security.RSAEncryptException;
 import org.gcszhn.system.service.UserDaoService;
 import org.gcszhn.system.service.UserService;
 import org.gcszhn.system.service.impl.UserServiceImpl;
 import org.gcszhn.system.service.obj.User;
+import org.gcszhn.system.service.obj.UserNode;
 import org.gcszhn.system.service.until.AppLog;
+import org.gcszhn.system.service.until.HttpRequest;
 import org.gcszhn.system.service.until.ProcessInteraction;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -83,19 +89,16 @@ public class Validation {
 
                     status = userDaoService.verifyUser(user);
                     //密码必须正确才能更新节点属性
-                    if (!user.isContainNode(Integer.parseInt(node)) && status==0) status =  -1;
                     if (status == 0) {
-                        valSession.invalidate(); //必须验证通过才失效，否则二次输入密码必须重新打开页面
                         user.setAliveNode(Integer.parseInt(node));
-                        HttpSession session = request.getSession();
-                        String cmd = "docker -H 172.16.10." 
-                            + user.getAliveNode()
-                            + " start " + UserServiceImpl.getTagPrefix() + user.getAccount();
-                        ProcessInteraction.localExec((Process p) -> {
-                            AppLog.printMessage("Start container successfully at node " + user.getAliveNode());
-                        }, cmd.toString().split(" "));
-                        session.setAttribute("user", user);//绑定用户，写入Redis
-                        session.setMaxInactiveInterval(3600*24);//会话有效期为1天
+                        if (user.getAliveNode() != null) {
+                            valSession.invalidate(); //必须验证通过才失效，否则二次输入密码必须重新打开页面
+                            HttpSession session = request.getSession();
+                            session.setAttribute("user", user);//绑定用户，写入Redis
+                            session.setMaxInactiveInterval(3600*24);//会话有效期为1天
+                        } else {
+                            status = -1;
+                        }
                     }
                 } else {
                     status = 4;
@@ -107,5 +110,48 @@ public class Validation {
         Result r = new Result();
         r.setStatus(status);
         return r;
+    }
+    /**启动经过验证的容器 */
+    @GetMapping("/init")
+    public Result doInit() {
+        Result res = new Result();
+        try {
+            HttpSession session = request.getSession(false);
+            User user = null;
+            if (session != null && (user = (User)session.getAttribute("user"))!=null) {
+                UserNode node = user.getAliveNode();
+                String cmd = String.format("docker -H %s.%d start %s", 
+                    UserServiceImpl.getDomain(), 
+                    node.getHost(), 
+                    UserServiceImpl.getTagPrefix()+user.getAccount());
+                ProcessInteraction.localExec((Process p) -> {
+                    while (true) {
+                        try {
+                            Thread.sleep(500);
+                            //发起连接测试
+                            HttpURLConnection connection = HttpRequest.getHttpURLConnection(
+                                String.format("http://%s.%d:%d/", 
+                                    UserServiceImpl.getDomain(),
+                                    node.getHost(),
+                                    node.getPortMap()[1][0]
+                                    ), "get");
+                            //获取状态码，如果连接失败，会抛出java.net.ConnectExeption extands IOException.
+                            connection.getResponseCode();
+                            break;
+                        } catch (IOException e) {
+                            continue;
+                        } catch (InterruptedException e) {
+                            AppLog.printMessage(e.getMessage(), Level.ERROR);
+                        }
+                    }
+                    AppLog.printMessage("Start container successfully at node " + node);
+                }, cmd.toString().split(" "));
+            }
+            res.setStatus(0);
+        } catch (Exception e) {
+            AppLog.printMessage(e.getMessage(), Level.ERROR);
+            res.setStatus(1);
+        }
+        return res;
     }
 }

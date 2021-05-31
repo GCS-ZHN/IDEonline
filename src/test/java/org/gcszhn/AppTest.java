@@ -16,6 +16,8 @@
 package org.gcszhn;
 
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.HttpURLConnection;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -27,9 +29,11 @@ import org.gcszhn.system.service.RedisService;
 import org.gcszhn.system.service.UserDaoService;
 import org.gcszhn.system.service.UserService;
 import org.gcszhn.system.service.VelocityService;
+import org.gcszhn.system.service.impl.UserServiceImpl;
 import org.gcszhn.system.service.obj.User;
 import org.gcszhn.system.service.obj.UserMail;
 import org.gcszhn.system.service.until.AppLog;
+import org.gcszhn.system.service.until.HttpRequest;
 import org.gcszhn.system.service.until.ProcessInteraction;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -208,6 +212,25 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
         ua.cancelAccount(user1);
         ua.cancelAccount(user2);
         ua.cancelAccount(user3);
+    }
+    @Test
+    public void testHttpRequest() throws Exception {
+        ProcessInteraction.localExec((Process p)->{
+            while (true) {
+                try {
+                    Thread.sleep(500);
+                    //发起连接测试
+                    HttpURLConnection connection = HttpRequest.getHttpURLConnection("http://172.16.10.41:48012/", "get");
+                    //获取状态码，如果连接失败，会抛出java.net.ConnectExeption extands IOException.
+                    System.out.println(connection.getResponseCode());
+                    break;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, ("docker -H "+ UserServiceImpl.getDomain()+ ".41 start MULTIPLE1.1-lumk").split(" "));
     }
 }
 

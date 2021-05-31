@@ -62,6 +62,16 @@ public class UserServiceImpl implements UserService {
     /**模板引擎服务 */
     @Autowired
     VelocityService velocityService;
+    /**Docker主机IP域 */
+    @Getter
+    private static String domain;
+    @Autowired
+    public void setDomain(JSONConfig jsonConfig) {
+        UserServiceImpl.domain = jsonConfig.getDockerConfig().getString("domain");
+        if (domain == null) {
+            throw new ConfigException("docker.domain");
+        }
+    }
     /**Docker容器标签前缀 */
     @Getter
     private static String tagPrefix;
@@ -100,7 +110,8 @@ public class UserServiceImpl implements UserService {
         }
         try {
             for (UserNode nc : user.getNodeConfigs()) {
-                StringBuilder cmd = new StringBuilder("docker -H 172.16.10.")
+                StringBuilder cmd = new StringBuilder("docker -H ")
+                    .append(getDomain()).append(".")
                     .append(nc.getHost())
                     .append(" run -d --privileged=")
                     .append(nc.isWithPrivilege())
@@ -141,7 +152,10 @@ public class UserServiceImpl implements UserService {
             return;
         try {
             for (UserNode nc : user.getNodeConfigs()) {
-                String cmd = "docker -H 172.16.10." + nc.getHost() + " rm -fv " + tagPrefix + user.getAccount();
+                String cmd = String.format("docker -H %s.%d rm -fv %s", 
+                    getDomain(), 
+                    nc.getHost(), 
+                    tagPrefix + user.getAccount());
                 ProcessInteraction.localExec((Process p) -> {
                     AppLog.printMessage("Degister successfully at node " + nc.getHost());
                 }, cmd.split(" "));
