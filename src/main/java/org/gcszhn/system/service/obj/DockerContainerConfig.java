@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2021 <a href="mailto:zhang.h.n@foxmail.com">Zhang.H.N</a>.
+ *
+ * Licensed under the Apache License, Version 2.0 (thie "License");
+ * You may not use this file except in compliance with the license.
+ * You may obtain a copy of the License at
+ *
+ *       http://wwww.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language govering permissions and
+ * limitations under the License.
+ */
 package org.gcszhn.system.service.obj;
 
 import java.util.ArrayList;
@@ -7,6 +22,10 @@ import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
+import com.github.dockerjava.api.model.RestartPolicy;
+
+import org.apache.logging.log4j.Level;
+import org.gcszhn.system.service.until.AppLog;
 
 import lombok.Getter;
 
@@ -16,13 +35,17 @@ import lombok.Getter;
  * @version 1.0
  */
 public class DockerContainerConfig {
+    /**容量单位 */
+    public static enum VolumeUnit {
+        B, KB, MB, GB, TB, PB;
+    }
     /**容器的基础镜像 */
     @Getter
     private String image;
     /**容器的名称 */
     @Getter
     private String name;
-    /**是否创建后立即运行 */
+    /**容器是否创建后立即运行 */
     @Getter
     private boolean run;
     /**宿主机端口绑定 */
@@ -31,15 +54,27 @@ public class DockerContainerConfig {
     /**容器暴露的端口 */
     @Getter
     private ExposedPort[] exposedPorts = null;
-    /**硬盘卷绑定 */
+    /**容器硬盘卷绑定 */
     @Getter
     private Bind[] volumeBinds = null;
-    /**物理及Swap内存总限制 */
+    /**容器物理及Swap内存总限制 */
     @Getter
     private Long memoryLimit = -1L;
-    /**可以使用的GPU设备ID */
+    /**容器可以使用的GPU设备ID */
     @Getter
-    List<String> gpuIds = null;
+    private List<String> gpuIds = null;
+    /**容器是否启用GPU */
+    @Getter
+    private boolean enableGPU = false;
+    /**容器是否有privilege权限 */
+    @Getter
+    private boolean privilege = false;
+    /**Dockerfile中CMD指令的内容参数，常作为ENTRYPOINT的参数 */
+    @Getter
+    private String[] cmdArgs = {};
+    /**Docker容器重启策略 */
+    @Getter
+    private RestartPolicy restartPolicy = RestartPolicy.noRestart();
     /**
      * 构造docker容器配置
      * @param image 镜像名
@@ -85,29 +120,95 @@ public class DockerContainerConfig {
      * @return 容器配置对象
      */
     public DockerContainerConfig withMemoryLimit(Long memoryLimit) {
+        return withMemoryLimit(memoryLimit, VolumeUnit.B);
+    }
+    /**
+     * 添加容器可用物理+SWAP内存限制
+     * @param memoryLimit 内存限制值
+     * @param unit 容量单位
+     * @return 容器配置对象
+     */
+    public DockerContainerConfig withMemoryLimit(Long memoryLimit, VolumeUnit unit) {
         this.memoryLimit = memoryLimit;
+        /**注意并未中间使用break */
+        switch(unit) {
+            case PB: this.memoryLimit <<= 10;
+            case TB: this.memoryLimit <<= 10;
+            case GB: this.memoryLimit <<= 10;
+            case MB: this.memoryLimit <<= 10;
+            case KB: this.memoryLimit <<= 10;
+            case B: break;
+        }
+        return this;
+    }
+    /**
+     * 当前容器是否启用GPU设备
+     * @param enableGPU true代表启用GPU设备
+     * @return 容器配置对象
+     */
+    public DockerContainerConfig withGPUEnable(boolean enableGPU) {
+        this.enableGPU = enableGPU;
         return this;
     }
     /**
      * 限制可用的gpu节点，没有添加时全部可用
      * @param gpuIds gpu设备编号
      * @return 容器配置对象
-     * @see DockerContainerConfig#withGPU(int[])
+     * @see DockerContainerConfig#withGPULimit(int[])
      */
-    public DockerContainerConfig withGPU(List<String> gpuIds) {
-        this.gpuIds = new ArrayList<>(gpuIds);
+    public DockerContainerConfig withGPULimit(List<String> gpuIds) {
+        if (this.enableGPU) {
+            this.gpuIds = new ArrayList<>(gpuIds);
+        } else {
+            AppLog.printMessage("Can't use this method without enable GPU", Level.ERROR);
+        }
         return this;
     }
     /**
      * 限制可用的gpu节点，没有添加时全部可用
      * @param gpuIds gpu设备编号
      * @return 容器配置对象
-     * @see DockerContainerConfig#withGPU(List)
+     * @see DockerContainerConfig#withGPULimit(List)
      */
-    public DockerContainerConfig withGPU(int[] gpuIds) {
-        this.gpuIds = new ArrayList<>(gpuIds.length);
-        for (int i=0; i<gpuIds.length; i++) {
-            this.gpuIds.add(String.valueOf(gpuIds[i]));
+    public DockerContainerConfig withGPULimit(int[] gpuIds) {
+        if (this.enableGPU) {
+            this.gpuIds = new ArrayList<>(gpuIds.length);
+            for (int i=0; i<gpuIds.length; i++) {
+                this.gpuIds.add(String.valueOf(gpuIds[i]));
+            }
+        } else {
+            AppLog.printMessage("Can't use this method without enable GPU", Level.ERROR);
+        }
+        return this;
+    }
+    /**
+     * 容器是否开启privilege权限，默认不开。
+     * @param privilege true代表开启privilege权限
+     * @return 容器配置对象
+     */
+    public DockerContainerConfig withPrivileged(boolean privilege) {
+        this.privilege = privilege;
+        return this;
+    }
+    /**
+     * Dockerfile中CMD指令内容，往往作为ENTRYPOINT指令的可变参数
+     * @param cmdArgs 不定个数的参数字符串
+     * @return 容器配置对象
+     */
+    public DockerContainerConfig withCmdArgs(String... cmdArgs) {
+        this.cmdArgs = cmdArgs;
+        return this;
+    }
+    /**
+     * 是否随着Docker服务自动启动，即开机自启。
+     * @param autoStart true代表自动启动
+     * @return 容器配置对象
+     */
+    public DockerContainerConfig withAutoStart(boolean autoStart) {
+        if (autoStart) {
+            this.restartPolicy = RestartPolicy.alwaysRestart();
+        } else {
+            this.restartPolicy = RestartPolicy.noRestart();
         }
         return this;
     }

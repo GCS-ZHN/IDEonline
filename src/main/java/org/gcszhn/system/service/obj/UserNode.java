@@ -20,8 +20,7 @@ import java.io.Serializable;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
-import org.gcszhn.system.config.ConfigException;
-import org.gcszhn.system.config.JSONConfig;
+import org.gcszhn.system.service.DockerService;
 import org.gcszhn.system.service.until.SpringTools;
 
 import lombok.Getter;
@@ -29,17 +28,15 @@ import lombok.Getter;
 /**
  * 注册节点类
  * @author Zhang.H.N
- * @version 1.1
+ * @version 1.2
  */
 public class UserNode implements Serializable {
     /**序列化ID */
-    public static final long serialVersionUID = 202104261748L;
+    public static final long serialVersionUID = 2021060116170258L;
     /**使用节点 */
     private @Getter int host;
     /**是否启用GPU，仅对含GPU节点有效 */
     private @Getter boolean enableGPU = false;
-    /**使用镜像 */
-    private @Getter String image;
     /**是否赋予最大权限 */
     private @Getter boolean withPrivilege = false;
     /**端口映射 */
@@ -51,7 +48,8 @@ public class UserNode implements Serializable {
      * @param withPrivilege 是否赋予最大权限
      * @param portMap 端口映射
      */
-    public UserNode(int hostIndex, boolean enableGPU, boolean withPrivilege, int[][] portMap) {
+    public UserNode(int host, boolean enableGPU, boolean withPrivilege, int[][] portMap) {
+        /*
         JSONArray nodes = SpringTools.getBean(JSONConfig.class).getDockerConfig().getJSONArray("nodes");
         if (nodes == null) {
             throw new ConfigException("docker.nodes");
@@ -69,6 +67,13 @@ public class UserNode implements Serializable {
         image = nodes.getJSONObject(hostIndex).getString("image");
         if (image == null) {
             throw new ConfigException("docker.nodes.image");
+        }*/
+        DockerNode node = SpringTools.getBean(DockerService.class).getDockerNodeByHost(host);
+        if (node != null) {
+            this.host = host;
+            this.enableGPU = node.getDevice()!=null 
+                && node.getDevice().get("gpu")!=null 
+                && !node.getDevice().get("gpu").isEmpty();
         }
         this.withPrivilege = withPrivilege;
         this.portMap = portMap;
@@ -91,7 +96,6 @@ public class UserNode implements Serializable {
             pMap
         );
         un.host = jsonObject.getIntValue("host");
-        un.image = jsonObject.getString("image");
         return un;
     }
 }

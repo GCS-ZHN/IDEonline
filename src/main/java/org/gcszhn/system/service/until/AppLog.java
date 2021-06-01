@@ -28,14 +28,39 @@ import org.apache.logging.log4j.Logger;
  */
 public class AppLog {
     /**
+     * 输出指定级别日志，指定信息源类名，并输出堆栈信息
+     * @param message 信息内容
+     * @param t 信息堆栈
+     * @param level 信息级别
+     * @param className 信息源类名
+     */
+    public static void printMessage(String message, Throwable t, Level level, String className) {
+        Logger logger = LogManager.getLogger(className);
+        if (t != null) {
+            logger.log(level, message!=null?message:t.getMessage());
+            logger.error("The stacktrace is:",t);
+        } else {
+            logger.log(level, message);
+        }
+    }
+    /**
      * 输出指定级别日志，指定信息源类名
      * @param message 信息内容
      * @param level 信息级别
      * @param className 信息源类名
      */
     public static void printMessage(String message, Level level, String className) {
-        Logger logger = LogManager.getLogger(className);
-        logger.log(level, message);
+        printMessage(message, null, level, className);
+    }
+    /**
+     * 输出指定级别日志，并输出堆栈信息
+     * @param message 信息内容
+     * @param t 信息堆栈
+     * @param level 信息级别
+     */
+    public static void printMessage(String message, Throwable t, Level level) {
+        StackTraceElement[] stack = new Throwable().getStackTrace();
+        printMessage(message, t, level, stack[stack.length > 1?1:0].getClassName());
     }
     /**
      * 输出指定级别日志，信息源类指定为本方法的调用类
@@ -44,8 +69,8 @@ public class AppLog {
      */
     public static void printMessage(String message, Level level) {
         StackTraceElement[] stack = new Throwable().getStackTrace();
-        printMessage(message, level, stack[stack.length > 1?1:0].getClassName());
-    }
+        printMessage(message, null, level, stack[stack.length > 1?1:0].getClassName());
+    } 
     /**
      * 输入INFO级别日志，信息源类指定为本方法的调用类
      * @param message 信息内容

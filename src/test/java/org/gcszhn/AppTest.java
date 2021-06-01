@@ -36,6 +36,7 @@ import org.gcszhn.system.service.impl.UserServiceImpl;
 import org.gcszhn.system.service.obj.DockerContainerConfig;
 import org.gcszhn.system.service.obj.User;
 import org.gcszhn.system.service.obj.UserMail;
+import org.gcszhn.system.service.obj.UserNode;
 import org.gcszhn.system.service.until.AppLog;
 import org.gcszhn.system.service.until.HttpRequest;
 import org.gcszhn.system.service.until.ProcessInteraction;
@@ -67,7 +68,17 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Rollback(false)
     @Test
     public void testRegisterAccount() {
-        ua.registerAccount(ua.createUser("test5", "test5", "zhanghn@zju.edu.cn"
+        ua.registerAccount(ua.createUser("test5", "test5", "zhanghn@zju.edu.cn",
+            new UserNode(41, true, true, new int[][]{
+                {49077, 8888},
+                {48077, 8067},
+                {47077, 8080}
+            }),
+            new UserNode(210, false, true, new int[][]{
+                {49077, 8888},
+                {48077, 8067},
+                {47077, 8080}
+            })
         ));
     }
     /**
@@ -231,7 +242,7 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
                     System.out.println(connection.getResponseCode());
                     break;
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    continue;
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -244,8 +255,12 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
             "172.16.10.41", 2375, DockerServiceImpl.getDefaultApiVersion());
         DockerContainerConfig config = new DockerContainerConfig(
             "zhanghn/multiple:v1.1", "MULTIPLE1.1-test", true)
-            .withGPU(new int[]{})
-            .withMemoryLimit(24L<<30)
+            .withCmdArgs("test")
+            .withAutoStart(true)
+            .withPrivileged(true)
+            .withGPUEnable(true)
+            .withGPULimit(new int[]{1,2,3})
+            .withMemoryLimit(24L, DockerContainerConfig.VolumeUnit.PB)
             .withPortBindings(new int[][]{
                 {43002, 8888},
                 {43001, 8067},
@@ -255,7 +270,8 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
                 "/public/home/test:/public/home/test",
                 "/public/packages:/public/packages"
             );
-        //dockerService.createContainer(client,config);
+        System.out.println(dockerService.getDockerNodeByHost(41).getImage());;
+        dockerService.createContainer(client,config);
         dockerService.deleteContainer(client, "MULTIPLE1.1-test");
     }
 }

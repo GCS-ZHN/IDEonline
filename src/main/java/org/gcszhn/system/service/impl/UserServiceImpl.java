@@ -15,21 +15,23 @@
  */
 package org.gcszhn.system.service.impl;
 
-import java.io.IOException;
+import com.github.dockerjava.api.DockerClient;
 
 import org.apache.logging.log4j.Level;
 import org.gcszhn.system.config.ConfigException;
 import org.gcszhn.system.config.JSONConfig;
+import org.gcszhn.system.service.DockerService;
 import org.gcszhn.system.service.MailService;
 import org.gcszhn.system.service.RedisService;
 import org.gcszhn.system.service.UserDaoService;
 import org.gcszhn.system.service.UserService;
 import org.gcszhn.system.service.VelocityService;
+import org.gcszhn.system.service.obj.DockerContainerConfig;
+import org.gcszhn.system.service.obj.DockerNode;
 import org.gcszhn.system.service.obj.User;
 import org.gcszhn.system.service.obj.UserMail;
 import org.gcszhn.system.service.obj.UserNode;
 import org.gcszhn.system.service.until.AppLog;
-import org.gcszhn.system.service.until.ProcessInteraction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -44,6 +46,19 @@ import lombok.Getter;
  */
 @Service
 public class UserServiceImpl implements UserService {
+    /**DAO服务 */
+    @Autowired @Getter
+    private UserDaoService userDaoService;
+    /**邮件服务 */
+    @Autowired
+    MailService mailService;
+    /**模板引擎服务 */
+    @Autowired
+    VelocityService velocityService;
+    /**Docker服务 */
+    @Autowired
+    DockerService dockerService;
+
     /**Nginx配置模板 */
     @Value("${nginx.temp}")
     private String nginxTemp;
@@ -53,15 +68,6 @@ public class UserServiceImpl implements UserService {
     /**Nginx主机 */
     @Value("${nginx.host}")
     private String nginxHost;
-    /**DAO对象 */
-    @Autowired @Getter
-    private UserDaoService userDao;
-    /**邮件服务 */
-    @Autowired
-    MailService mailService;
-    /**模板引擎服务 */
-    @Autowired
-    VelocityService velocityService;
     /**Docker主机IP域 */
     @Getter
     private static String domain;
@@ -97,72 +103,63 @@ public class UserServiceImpl implements UserService {
     }
     @Override
     public void setPassword(User user, String newpasswd) {
-        if (userDao.verifyUser(user) == 0) {
+        if (userDaoService.verifyUser(user) == 0) {
             user.setPassword(newpasswd);
-            userDao.updateUser(user);
+            userDaoService.updateUser(user);
         }
     }
     @Override
     public void registerAccount(User user) {
-        if (userDao.verifyUser(user) != -1) {
+        if (userDaoService.verifyUser(user) != -1) {
             AppLog.printMessage("User has been register!", Level.ERROR);
             return;
         }
         try {
             for (UserNode nc : user.getNodeConfigs()) {
-                StringBuilder cmd = new StringBuilder("docker -H ")
-                    .append(getDomain()).append(".")
-                    .append(nc.getHost())
-                    .append(" run -d --privileged=")
-                    .append(nc.isWithPrivilege())
-                    .append(" --restart=no")
-                    .append(" --memory=24g")
-                    .append(" --memory-swap=24g")
-                    ;
-                for (int[] portPair : nc.getPortMap()) {
-                    cmd.append(" -p ").append(portPair[0]).append(":").append(portPair[1]);
-                }
-                cmd.append(" -v /public/home/")
-                    .append(user.getAccount())
-                    .append(":")
-                    .append("/public/home/")
-                    .append(user.getAccount())
-                    .append(" -v /public/packages:/public/packages")
-                    .append(" --name ")
-                    .append(tagPrefix)
-                    .append(user.getAccount());
+                String ip = getDomain()+"."+nc.getHost();
+                DockerNode dockerNode = dockerService.getDockerNodeByHost(nc.getHost());
+                try (DockerClient dockerClient = dockerService.creatClient(
+                    ip, dockerNode.getPort(), dockerNode.getApiVersion())) {
+                    // Docker容器配置
+                    DockerContainerConfig config = new DockerContainerConfig(
+                        dockerNode.getImage(), getTagPrefix()+user.getAccount(), true)
+                        .withGPUEnable(nc.isEnableGPU())      //GPU是否启用
+                        .withPrivileged(nc.isWithPrivilege()) //是否有root权限
+                        .withMemoryLimit(24L, DockerContainerConfig.VolumeUnit.GB) //实际内存及SWAP总限制
+                        .withPortBindings(nc.getPortMap())    //端口映射
+                        .withVolumeBindings(                  //硬盘卷映射
+                            "/public/home/"+user.getAccount()+":/public/home/"+user.getAccount(),
+                            "/public/packages:/public/packages")
+                        .withCmdArgs(user.getAccount());       //CMD指令参数
 
-                if (nc.isEnableGPU()) {
-                    cmd.append(" --gpus all");
+                    dockerService.createContainer(dockerClient, config);
+                } catch (Exception e) {
+                    AppLog.printMessage(null, e, Level.ERROR);
                 }
-                cmd.append(" ").append(nc.getImage()).append(" ").append(user.getAccount());
-                ProcessInteraction.localExec((Process p) -> {
-                    AppLog.printMessage("Register successfully at node " + nc.getHost());
-                }, cmd.toString().split(" "));
             }
-            userDao.addUser(user);
-            //writeIntoNginx(user);
-        } catch (InterruptedException | IOException  e) {
-            e.printStackTrace();
+            userDaoService.addUser(user);
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
         }
     }
     @Override
     public void cancelAccount(User user) {
-        if (userDao.verifyUser(user) != 0)
+        if (userDaoService.verifyUser(user) != 0)
             return;
         try {
             for (UserNode nc : user.getNodeConfigs()) {
-                String cmd = String.format("docker -H %s.%d rm -fv %s", 
-                    getDomain(), 
-                    nc.getHost(), 
-                    tagPrefix + user.getAccount());
-                ProcessInteraction.localExec((Process p) -> {
-                    AppLog.printMessage("Degister successfully at node " + nc.getHost());
-                }, cmd.split(" "));
+                String ip = getDomain()+"."+nc.getHost();
+                DockerNode dockerNode = dockerService.getDockerNodeByHost(nc.getHost());
+                try (DockerClient dockerClient = dockerService.creatClient(
+                    ip, dockerNode.getPort(), dockerNode.getApiVersion())) {
+                    dockerService.deleteContainer(dockerClient, getTagPrefix()+user.getAccount());
+                } catch (Exception e) {
+                    AppLog.printMessage(null, e, Level.ERROR);
+                }
             }
-            userDao.removeUser(user);
-        } catch (InterruptedException | IOException e) {
-            e.printStackTrace();
+            userDaoService.removeUser(user);
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
         }
     }
     @Async //异步发送，防止服务阻塞
@@ -177,20 +174,20 @@ public class UserServiceImpl implements UserService {
                     userMail.getInitContext().apply(user)),   //模板变量自定义处理
                 userMail.getContentType());                   //邮件MINE类型
         } catch (Exception e) {
-            AppLog.printMessage(e.getMessage(), Level.ERROR);
+            AppLog.printMessage(null, e, Level.ERROR);
         }
     }
     @Async
     @Override
     public void sendMailToAll(UserMail userMail) {
         try {
-            userDao.fetchUserList().forEach((User user)->{
+            userDaoService.fetchUserList().forEach((User user)->{
                 if (user.getAddress()!=null) {
                     sendMail(user, userMail);
                 }
             });
         } catch (Exception e) {
-            AppLog.printMessage(e.getMessage(), Level.ERROR);
+            AppLog.printMessage(null, e, Level.ERROR);
         }
     }
 }
