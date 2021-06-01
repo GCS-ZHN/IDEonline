@@ -31,7 +31,9 @@ import org.gcszhn.system.service.obj.DockerNode;
 import org.gcszhn.system.service.obj.User;
 import org.gcszhn.system.service.obj.UserMail;
 import org.gcszhn.system.service.obj.UserNode;
+import org.gcszhn.system.service.obj.User.UserAction;
 import org.gcszhn.system.service.until.AppLog;
+import org.gcszhn.system.watch.UserEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -89,6 +91,7 @@ public class UserServiceImpl implements UserService {
             throw new ConfigException("docker.prefix");
         }
     }
+    /**Redis服务 */
     @Autowired
     private RedisService redisService;
     @Override
@@ -138,6 +141,8 @@ public class UserServiceImpl implements UserService {
                 }
             }
             userDaoService.addUser(user);
+            /**注册用户，并通知监听器 */
+            user.notifyUserListener(new UserEvent(user, UserAction.REGISTER));
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         }
@@ -158,6 +163,8 @@ public class UserServiceImpl implements UserService {
                 }
             }
             userDaoService.removeUser(user);
+            /**注销账号，并通知监听器 */
+            user.notifyUserListener(new UserEvent(user, UserAction.CANCEL));
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         }

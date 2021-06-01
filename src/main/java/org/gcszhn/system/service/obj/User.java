@@ -54,6 +54,7 @@ public class User implements HttpSessionBindingListener, Serializable {
     /**注册节点列表 */
     @Getter
     private ArrayList<UserNode> nodeConfigs = new ArrayList<>(2);
+
     /**用户动作枚举类型 */
     public static enum UserAction {
         LOGIN, LOGOUT, REGISTER, CANCEL;
@@ -105,8 +106,10 @@ public class User implements HttpSessionBindingListener, Serializable {
                 event.getSession().getId(), 
                 getAliveNode().getHost() + portset);
             AppLog.printMessage("Add user to redis with session successfully");
+            /**疑似登录，由监听器处理 */
+            notifyUserListener(new UserEvent(this, UserAction.LOGIN));
         } catch (Exception e) {
-            AppLog.printMessage(e.getMessage(), Level.ERROR);
+            AppLog.printMessage(null, e, Level.ERROR);
         }
     }
     /** 注销或会话失效时用户与会话解绑，同时删除Redis缓存 */
@@ -116,8 +119,10 @@ public class User implements HttpSessionBindingListener, Serializable {
             redisService.redisHdel("session", event.getSession().getId());
             redisService.redisHdel("session", event.getSession().getId()+"-"+"vscode");
             redisService.redisHdel("session", event.getSession().getId()+"-"+"jupyter");
+            /**疑似登出，由监听器处理 */
+            notifyUserListener(new UserEvent(this, UserAction.LOGOUT));
         } catch (NullPointerException e) {
-            AppLog.printMessage(e.getMessage(), Level.ERROR);
+            AppLog.printMessage(null, e, Level.ERROR);
             
         }
     }
