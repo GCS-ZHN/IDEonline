@@ -42,7 +42,7 @@ import lombok.Getter;
 /**
  * 用户服务接口扩展类
  * @author Zhang.H.N
- * @version 1.1
+ * @version 1.2
  */
 @Service
 public class UserServiceImpl implements UserService {

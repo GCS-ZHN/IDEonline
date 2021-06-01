@@ -28,7 +28,7 @@ import lombok.Getter;
 /**
  * 注册节点类
  * @author Zhang.H.N
- * @version 1.2
+ * @version 1.3
  */
 public class UserNode implements Serializable {
     /**序列化ID */
