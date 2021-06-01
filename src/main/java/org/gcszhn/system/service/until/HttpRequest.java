@@ -20,7 +20,18 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+/**
+ * 用于向外发送Http请求
+ * @author Zhang.H.N
+ * @version 1.0
+ */
 public class HttpRequest {
+	/**
+	 * 
+	 * @param url Http协议下的统一资源定位符
+	 * @param method Http协议的请求方法
+	 * @return Http连接对象
+	 */
 	public static HttpURLConnection getHttpURLConnection(String url, String method) {
 		HttpURLConnection connection = null;
 		try {

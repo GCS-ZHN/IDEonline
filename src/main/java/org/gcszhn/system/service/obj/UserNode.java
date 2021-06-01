@@ -49,25 +49,6 @@ public class UserNode implements Serializable {
      * @param portMap 端口映射
      */
     public UserNode(int host, boolean enableGPU, boolean withPrivilege, int[][] portMap) {
-        /*
-        JSONArray nodes = SpringTools.getBean(JSONConfig.class).getDockerConfig().getJSONArray("nodes");
-        if (nodes == null) {
-            throw new ConfigException("docker.nodes");
-        }
-        if (hostIndex >= nodes.size() || hostIndex < 0) {
-            System.out.print(hostIndex);
-            throw new ArrayIndexOutOfBoundsException("Host index out of support range");
-        }
-        host = nodes.getJSONObject(hostIndex).getIntValue("host");
-        if (host == 41) {
-            this.enableGPU = enableGPU;
-        } else if (host == 0) {
-            throw new ConfigException("docker.nodes.host");
-        }
-        image = nodes.getJSONObject(hostIndex).getString("image");
-        if (image == null) {
-            throw new ConfigException("docker.nodes.image");
-        }*/
         DockerNode node = SpringTools.getBean(DockerService.class).getDockerNodeByHost(host);
         if (node != null) {
             this.host = host;

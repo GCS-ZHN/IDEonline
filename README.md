@@ -11,12 +11,10 @@
 
 # 优化计划
 - 容器闲置超时，自动关闭容器。下次访问时重新启动。
-- 优化Nginx+Lua+Redis的访问。
-  - 将redis访问返回信息改为对应的IP+port。使用resty/redis模块和access_by_lua_file指令。
-- 引入docker-java替代docker命令行，建立dockerService
 - 搭建管理员平台。
 - 搭建帮助。
 
 # 存在的问题
 - jupyter notebook一致保持打开，模型训练导致内存爆炸
 - Nginx服务稳定性问题，请求堆积导致的nginx崩溃，需要重启nginx服务方能解决
+- Redis服务稳定性问题，存在Redis服务不可及的情况，nginx会提示service temporarily unavailable，而spring后端日志会提示连接超时。具体原因尚不清楚，重启redis服务可以正常。
