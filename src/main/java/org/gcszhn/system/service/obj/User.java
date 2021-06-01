@@ -24,6 +24,8 @@ import javax.servlet.http.HttpSessionBindingListener;
 import org.apache.logging.log4j.Level;
 import org.gcszhn.system.service.RedisService;
 import org.gcszhn.system.service.until.AppLog;
+import org.gcszhn.system.watch.UserEvent;
+import org.gcszhn.system.watch.UserListener;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -33,6 +35,8 @@ import lombok.Setter;
  * @version 1.0
  */
 public class User implements HttpSessionBindingListener, Serializable {
+    /**用户监听器容器 */
+    private ArrayList<UserListener> userListeners = new ArrayList<>();
     /**序列化ID */
     private static final long serialVersionUID = 202105081043L;
     /**用户名，限定UserAffairs类进行使用setter */
@@ -41,6 +45,7 @@ public class User implements HttpSessionBindingListener, Serializable {
     /**密码，限定UserAffairs类进行setter/getter */
     @Getter @Setter
     private String password;
+    /**用户邮箱 */
     @Getter @Setter
     private String address;
     /**活跃节点 */
@@ -49,6 +54,10 @@ public class User implements HttpSessionBindingListener, Serializable {
     /**注册节点列表 */
     @Getter
     private ArrayList<UserNode> nodeConfigs = new ArrayList<>(2);
+    /**用户动作枚举类型 */
+    public static enum UserAction {
+        LOGIN, LOGOUT, REGISTER, CANCEL;
+    }
     /**
      * 设置用户注册节点
      * @param nodeConfigs
@@ -110,6 +119,29 @@ public class User implements HttpSessionBindingListener, Serializable {
         } catch (NullPointerException e) {
             AppLog.printMessage(e.getMessage(), Level.ERROR);
             
+        }
+    }
+    /**
+     * 添加用户事件监听器
+     * @param userListeners 不定个数用户事件监听器
+     */
+    public void addUserListener(UserListener... userListeners) {
+        for (UserListener ul: userListeners) {
+            this.userListeners.add(ul);
+        }
+    }
+    /**
+     * 用户事件发生时通知监听器
+     * @param ue 用户事件
+     */
+    public void notifyUserListener(UserEvent ue) {
+        for (UserListener ul: this.userListeners) {
+            switch (ue.getUserAction()) {
+                case LOGIN:{ul.userLogin(ue);break;}
+                case LOGOUT:{ul.userLogout(ue);break;}
+                case REGISTER:{ul.userRegister(ue);break;}
+                case CANCEL:{ul.userCancel(ue);break;}
+            }
         }
     }
 }
