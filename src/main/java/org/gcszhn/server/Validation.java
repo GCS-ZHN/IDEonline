@@ -21,16 +21,19 @@ import java.net.HttpURLConnection;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import com.github.dockerjava.api.DockerClient;
+
 import org.apache.logging.log4j.Level;
 import org.gcszhn.system.security.RSAEncrypt;
+import org.gcszhn.system.service.DockerService;
 import org.gcszhn.system.service.UserDaoService;
 import org.gcszhn.system.service.UserService;
 import org.gcszhn.system.service.impl.UserServiceImpl;
+import org.gcszhn.system.service.obj.DockerNode;
 import org.gcszhn.system.service.obj.User;
 import org.gcszhn.system.service.obj.UserNode;
 import org.gcszhn.system.service.until.AppLog;
 import org.gcszhn.system.service.until.HttpRequest;
-import org.gcszhn.system.service.until.ProcessInteraction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,8 +45,16 @@ import lombok.Data;
  */
 @RestController
 public class Validation {
+    /**用户DAO服务 */
     @Autowired
     UserDaoService userDaoService;
+    /**用户服务 */
+    @Autowired
+    UserService userService;
+    /**Docker服务 */
+    @Autowired
+    DockerService dockerService;
+
     /**验证结果Bean对象 */
     @Data
     class Result {
@@ -52,9 +63,6 @@ public class Validation {
     /**Web请求对象 */
     @Autowired
     HttpServletRequest request;
-    /**用户处理Bean组件 */
-    @Autowired
-    UserService ua;
     /**接受验证请求的方法 */
     @PostMapping("/validate")
     public Result doValidate() {
@@ -82,7 +90,7 @@ public class Validation {
             try {
                 if ((keypair instanceof String[])) {
                     String[] keys = (String[]) keypair;
-                    User user = ua.createUser(
+                    User user = userService.createUser(
                         account, 
                        RSAEncrypt.decryptToString(passwd, keys[0]), 
                        null);
@@ -115,11 +123,42 @@ public class Validation {
     @GetMapping("/init")
     public Result doInit() {
         Result res = new Result();
+        res.setStatus(1);
         try {
             HttpSession session = request.getSession(false);
             User user = null;
             if (session != null && (user = (User)session.getAttribute("user"))!=null) {
-                UserNode node = user.getAliveNode();
+                UserNode userNode = user.getAliveNode();
+                DockerNode dockerNode = dockerService.getDockerNodeByHost(userNode.getHost());
+                try (DockerClient dockerClient = dockerService.creatClient(
+                    UserServiceImpl.getDomain()+"."+userNode.getHost(), 
+                    dockerNode.getPort(), dockerNode.getApiVersion());) {
+                    dockerService.startContainer(dockerClient, UserServiceImpl.getTagPrefix()+user.getAccount());
+
+                    //测试内部程序是否启动
+                    while (true) {
+                        try {
+                            Thread.sleep(500);
+                            //发起连接测试
+                            HttpURLConnection connection = HttpRequest.getHttpURLConnection(
+                                String.format("http://%s.%d:%d/", 
+                                    UserServiceImpl.getDomain(),
+                                    userNode.getHost(),
+                                    userNode.getPortMap()[1][0]
+                                    ), "get");
+                            //获取状态码，如果连接失败，会抛出java.net.ConnectExeption extands IOException.
+                            connection.getResponseCode();
+                            break;
+                        } catch (IOException e) {
+                            continue;
+                        }
+                    }
+                    AppLog.printMessage("Start container successfully at node " + userNode.getHost());
+                    res.setStatus(0);
+                } catch (Exception e) {
+                    AppLog.printMessage(null, e, Level.ERROR);
+                }
+                /*
                 String cmd = String.format("docker -H %s.%d start %s", 
                     UserServiceImpl.getDomain(), 
                     node.getHost(), 
@@ -141,16 +180,15 @@ public class Validation {
                         } catch (IOException e) {
                             continue;
                         } catch (InterruptedException e) {
-                            AppLog.printMessage(e.getMessage(), Level.ERROR);
+                            AppLog.printMessage(null, e, Level.ERROR);
                         }
                     }
-                    AppLog.printMessage("Start container successfully at node " + node);
-                }, cmd.toString().split(" "));
+                    AppLog.printMessage("Start container successfully at node " + node.getHost());
+                }, cmd.toString().split(" "));*/
             }
-            res.setStatus(0);
         } catch (Exception e) {
             AppLog.printMessage(e.getMessage(), Level.ERROR);
-            res.setStatus(1);
+
         }
         return res;
     }

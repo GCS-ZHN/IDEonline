@@ -15,8 +15,11 @@
  */
 package org.gcszhn;
 
+import javax.annotation.PreDestroy;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.system.ApplicationPidFileWriter;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
@@ -28,6 +31,13 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 public class App {
     public static void main(String[] args) {
-        SpringApplication.run(App.class, args);
+        //SpringApplication.run(App.class, args);
+        SpringApplication application = new SpringApplication(App.class);
+        application.addListeners(new ApplicationPidFileWriter("app.pid"));
+        application.run(args);
+    }
+    @PreDestroy
+    public void preDestroy() {
+        System.out.println("Application exited");
     }
 }
