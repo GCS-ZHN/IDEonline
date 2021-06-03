@@ -15,44 +15,52 @@
  */
 package org.gcszhn.system.watch;
 
-import java.util.HashMap;
-import java.util.List;
+import com.github.dockerjava.api.DockerClient;
 
-import javax.servlet.http.HttpSession;
+import org.apache.logging.log4j.Level;
+import org.gcszhn.system.service.DockerService;
+import org.gcszhn.system.service.impl.UserServiceImpl;
+import org.gcszhn.system.service.obj.DockerNode;
+import org.gcszhn.system.service.obj.User;
+import org.gcszhn.system.service.obj.UserNode;
+import org.gcszhn.system.service.until.AppLog;
+import org.gcszhn.system.service.until.SpringTools;
 
 /**
  * 用户在线情况监听器
+ * 
  * @author Zhang.H.N
  * @version 1.0
  */
 public class UserOnlineListener implements UserListener {
-    /**在线用户统计 */
-    private static HashMap <String, List<HttpSession>> onlineUsers = new HashMap<>();
     @Override
-    public void userRegister(UserEvent ue) {
-        synchronized(onlineUsers) {
-
-        }
-    }
+    public void userRegister(UserEvent ue) {}
 
     @Override
-    public void userCancel(UserEvent ue) {
-        synchronized(onlineUsers) {
-
-        }
-    }
+    public void userCancel(UserEvent ue) {}
 
     @Override
-    public void userLogin(UserEvent ue) {
-        synchronized(onlineUsers) {
-
-        }
-    }
+    public void userLogin(UserEvent ue) {}
 
     @Override
     public void userLogout(UserEvent ue) {
-        synchronized(onlineUsers) {
+        try {
+            User user = ue.getUser();
+            DockerService dockerService = SpringTools.getBean(DockerService.class);
+            UserNode aliveNode = user.getAliveNode();
+            DockerNode dockerNode = dockerService.getDockerNodeByHost(aliveNode.getHost());
 
+            //建立docker服务连接，关闭容器
+            try (DockerClient dockerClient = dockerService.creatClient(
+                UserServiceImpl.getDomain()+"."+aliveNode.getHost(), 
+                dockerNode.getPort(), dockerNode.getApiVersion())) {
+                    dockerService.stopContainer(dockerClient, 
+                        UserServiceImpl.getTagPrefix()+user.getAccount());
+            }
+            AppLog.printMessage(
+                String.format("%s's container at %d closed", user.getAccount(), aliveNode.getHost()));
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
         }
     }
 }

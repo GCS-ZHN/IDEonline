@@ -24,6 +24,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.DeviceRequest;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
@@ -199,5 +200,16 @@ public class DockerServiceImpl implements DockerService {
             AppLog.printMessage("Docker node map hasn't been initialized", Level.ERROR);
             return null;
         }
+    }
+    @Override
+    public boolean getContainerStatus(DockerClient dockerClient, String name) {
+        try {
+            InspectContainerResponse response = dockerClient.inspectContainerCmd(name).exec();
+            return response.getState().getRunning();
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
+            return false;
+        }
+        
     }
 }

@@ -15,6 +15,10 @@
  */
 package org.gcszhn.system.service.impl;
 
+import java.util.HashMap;
+
+import javax.servlet.http.HttpSession;
+
 import com.github.dockerjava.api.DockerClient;
 
 import org.apache.logging.log4j.Level;
@@ -34,6 +38,7 @@ import org.gcszhn.system.service.obj.UserNode;
 import org.gcszhn.system.service.obj.User.UserAction;
 import org.gcszhn.system.service.until.AppLog;
 import org.gcszhn.system.watch.UserEvent;
+import org.gcszhn.system.watch.UserOnlineListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -43,36 +48,41 @@ import lombok.Getter;
 
 /**
  * 用户服务接口扩展类
+ * 
  * @author Zhang.H.N
- * @version 1.2
+ * @version 1.3
  */
 @Service
 public class UserServiceImpl implements UserService {
-    /**DAO服务 */
-    @Autowired @Getter
+    /** DAO服务 */
+    @Autowired
+    @Getter
     private UserDaoService userDaoService;
-    /**邮件服务 */
+    /** 邮件服务 */
     @Autowired
     MailService mailService;
-    /**模板引擎服务 */
+    /** 模板引擎服务 */
     @Autowired
     VelocityService velocityService;
-    /**Docker服务 */
+    /** Docker服务 */
     @Autowired
     DockerService dockerService;
 
-    /**Nginx配置模板 */
+    /** Nginx配置模板 */
     @Value("${nginx.temp}")
     private String nginxTemp;
-    /**Nginx配置目录 */
+    /** Nginx配置目录 */
     @Value("${nginx.confdir}")
     private String nginxConfDir;
-    /**Nginx主机 */
+    /** Nginx主机 */
     @Value("${nginx.host}")
     private String nginxHost;
-    /**Docker主机IP域 */
+    /** Docker主机IP域 */
     @Getter
     private static String domain;
+    /**在线用户统计 */
+    private HashMap <String, HttpSession> onlineUsers = new HashMap<>();
+
     @Autowired
     public void setDomain(JSONConfig jsonConfig) {
         UserServiceImpl.domain = jsonConfig.getDockerConfig().getString("domain");
@@ -80,10 +90,12 @@ public class UserServiceImpl implements UserService {
             throw new ConfigException("docker.domain");
         }
     }
-    /**Docker容器标签前缀 */
+
+    /** Docker容器标签前缀 */
     @Getter
     private static String tagPrefix;
-    /**配置docker容器标签前缀 */
+
+    /** 配置docker容器标签前缀 */
     @Autowired
     public void setTagPrefix(JSONConfig jsonConfig) {
         UserServiceImpl.tagPrefix = jsonConfig.getDockerConfig().getString("prefix");
@@ -91,9 +103,11 @@ public class UserServiceImpl implements UserService {
             throw new ConfigException("docker.prefix");
         }
     }
-    /**Redis服务 */
+
+    /** Redis服务 */
     @Autowired
     private RedisService redisService;
+
     @Override
     public User createUser(String account, String password, String address, UserNode... nodeConfigs) {
         User user = new User();
@@ -101,9 +115,11 @@ public class UserServiceImpl implements UserService {
         user.setPassword(password);
         user.setAddress(address);
         user.setRedisService(redisService);
-        if (nodeConfigs != null) user.setNodeConfigs(nodeConfigs);
+        if (nodeConfigs != null)
+            user.setNodeConfigs(nodeConfigs);
         return user;
     }
+
     @Override
     public void setPassword(User user, String newpasswd) {
         if (userDaoService.verifyUser(user) == 0) {
@@ -111,6 +127,7 @@ public class UserServiceImpl implements UserService {
             userDaoService.updateUser(user);
         }
     }
+
     @Override
     public void registerAccount(User user) {
         if (userDaoService.verifyUser(user) != -1) {
@@ -119,21 +136,20 @@ public class UserServiceImpl implements UserService {
         }
         try {
             for (UserNode nc : user.getNodeConfigs()) {
-                String ip = getDomain()+"."+nc.getHost();
+                String ip = getDomain() + "." + nc.getHost();
                 DockerNode dockerNode = dockerService.getDockerNodeByHost(nc.getHost());
-                try (DockerClient dockerClient = dockerService.creatClient(
-                    ip, dockerNode.getPort(), dockerNode.getApiVersion())) {
+                try (DockerClient dockerClient = dockerService.creatClient(ip, dockerNode.getPort(),
+                        dockerNode.getApiVersion())) {
                     // Docker容器配置
-                    DockerContainerConfig config = new DockerContainerConfig(
-                        dockerNode.getImage(), getTagPrefix()+user.getAccount(), true)
-                        .withGPUEnable(nc.isEnableGPU())      //GPU是否启用
-                        .withPrivileged(nc.isWithPrivilege()) //是否有root权限
-                        .withMemoryLimit(24L, DockerContainerConfig.VolumeUnit.GB) //实际内存及SWAP总限制
-                        .withPortBindings(nc.getPortMap())    //端口映射
-                        .withVolumeBindings(                  //硬盘卷映射
-                            "/public/home/"+user.getAccount()+":/public/home/"+user.getAccount(),
-                            "/public/packages:/public/packages")
-                        .withCmdArgs(user.getAccount());       //CMD指令参数
+                    DockerContainerConfig config = new DockerContainerConfig(dockerNode.getImage(),
+                            getTagPrefix() + user.getAccount(), true).withGPUEnable(nc.isEnableGPU()) // GPU是否启用
+                                    .withPrivileged(nc.isWithPrivilege()) // 是否有root权限
+                                    .withMemoryLimit(24L, DockerContainerConfig.VolumeUnit.GB) // 实际内存及SWAP总限制
+                                    .withPortBindings(nc.getPortMap()) // 端口映射
+                                    .withVolumeBindings( // 硬盘卷映射
+                                            "/public/home/" + user.getAccount() + ":/public/home/" + user.getAccount(),
+                                            "/public/packages:/public/packages")
+                                    .withCmdArgs(user.getAccount()); // CMD指令参数
 
                     dockerService.createContainer(dockerClient, config);
                 } catch (Exception e) {
@@ -141,60 +157,121 @@ public class UserServiceImpl implements UserService {
                 }
             }
             userDaoService.addUser(user);
-            /**注册用户，并通知监听器 */
+            /** 注册用户，并通知监听器 */
             user.notifyUserListener(new UserEvent(user, UserAction.REGISTER));
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         }
     }
+
     @Override
     public void cancelAccount(User user) {
         if (userDaoService.verifyUser(user) != 0)
             return;
         try {
             for (UserNode nc : user.getNodeConfigs()) {
-                String ip = getDomain()+"."+nc.getHost();
+                String ip = getDomain() + "." + nc.getHost();
                 DockerNode dockerNode = dockerService.getDockerNodeByHost(nc.getHost());
-                try (DockerClient dockerClient = dockerService.creatClient(
-                    ip, dockerNode.getPort(), dockerNode.getApiVersion())) {
-                    dockerService.deleteContainer(dockerClient, getTagPrefix()+user.getAccount());
+                try (DockerClient dockerClient = dockerService.creatClient(ip, dockerNode.getPort(),
+                        dockerNode.getApiVersion())) {
+                    dockerService.deleteContainer(dockerClient, getTagPrefix() + user.getAccount());
                 } catch (Exception e) {
                     AppLog.printMessage(null, e, Level.ERROR);
                 }
             }
             userDaoService.removeUser(user);
-            /**注销账号，并通知监听器 */
+            /** 注销账号，并通知监听器 */
             user.notifyUserListener(new UserEvent(user, UserAction.CANCEL));
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         }
     }
-    @Async //异步发送，防止服务阻塞
+
+    @Async // 异步发送，防止服务阻塞
     @Override
     public void sendMail(User user, UserMail userMail) {
         try {
-            mailService.sendMail(
-                user.getAddress(),                            //邮件地址
-                userMail.getSubject(),                        //邮件主题
-                velocityService.getResult(                    //模板过滤
-                    userMail.getVmfile(),                     //模板文件
-                    userMail.getInitContext().apply(user)),   //模板变量自定义处理
-                userMail.getContentType());                   //邮件MINE类型
+            mailService.sendMail(user.getAddress(), // 邮件地址
+                    userMail.getSubject(), // 邮件主题
+                    velocityService.getResult( // 模板过滤
+                            userMail.getVmfile(), // 模板文件
+                            userMail.getInitContext().apply(user)), // 模板变量自定义处理
+                    userMail.getContentType()); // 邮件MINE类型
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         }
     }
+
     @Async
     @Override
     public void sendMailToAll(UserMail userMail) {
         try {
-            userDaoService.fetchUserList().forEach((User user)->{
-                if (user.getAddress()!=null) {
+            userDaoService.fetchUserList().forEach((User user) -> {
+                if (user.getAddress() != null) {
                     sendMail(user, userMail);
                 }
             });
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
+        }
+    }
+
+    @Override
+    public int getOnlineUserCount() {
+        return onlineUsers.size();
+    }
+
+    @Override
+    public synchronized void addOnlineUser(User user, HttpSession session, boolean overwrite) {
+        try {
+            HttpSession oldSession = onlineUsers.get(user.getAccount());
+            user.addUserListener(new UserOnlineListener());//添加用户在线监听
+            if (oldSession != null && overwrite) { //覆盖旧有记录
+                oldSession.invalidate();           //同时只允许一个在线
+                session.setAttribute("user", user);//会话绑定用户，写入Redis
+                onlineUsers.put(user.getAccount(), session);
+            } else if (oldSession == null) {       //新建记录
+                onlineUsers.put(user.getAccount(), session);
+                session.setAttribute("user", user);//会话绑定用户，写入Redis
+                user.notifyUserListener(new UserEvent(user, UserAction.LOGIN));
+            } else {  //无效添加, 销毁新的会话，释放tomcat资源
+                session.invalidate();
+            }
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
+        }
+
+    }
+
+    @Override
+    public synchronized int removeOnlineUser(String username) {
+        int status = 0;
+        try {
+            if (onlineUsers.containsKey(username)) {
+                //从会话中获取注册了用户监听器的用户对象
+                HttpSession session = onlineUsers.remove(username);
+                User user = (User) session.getAttribute("user");
+                AppLog.printMessage(username+" is removed from online map");
+                user.notifyUserListener(new UserEvent(user, UserAction.LOGOUT));
+            } else {
+                status = 1;
+                AppLog.printMessage(username+" is not online yet");
+            }
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
+            status = -1;
+        }
+        return status;
+    }
+
+    @Override
+    public boolean isOnlineUser(String username) {
+        try {
+            return onlineUsers.containsKey(username) 
+            && onlineUsers.get(username) != null;
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
+            return false;
         }
     }
 }

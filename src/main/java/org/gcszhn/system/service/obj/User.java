@@ -106,8 +106,6 @@ public class User implements HttpSessionBindingListener, Serializable {
                 event.getSession().getId(), 
                 getAliveNode().getHost() + portset);
             AppLog.printMessage("Add user to redis with session successfully");
-            /**疑似登录，由监听器处理 */
-            notifyUserListener(new UserEvent(this, UserAction.LOGIN));
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         }
@@ -117,10 +115,6 @@ public class User implements HttpSessionBindingListener, Serializable {
     public void valueUnbound(HttpSessionBindingEvent event) {
         try {
             redisService.redisHdel("session", event.getSession().getId());
-            redisService.redisHdel("session", event.getSession().getId()+"-"+"vscode");
-            redisService.redisHdel("session", event.getSession().getId()+"-"+"jupyter");
-            /**疑似登出，由监听器处理 */
-            notifyUserListener(new UserEvent(this, UserAction.LOGOUT));
         } catch (NullPointerException e) {
             AppLog.printMessage(null, e, Level.ERROR);
             

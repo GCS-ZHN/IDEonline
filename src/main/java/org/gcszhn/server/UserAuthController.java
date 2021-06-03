@@ -24,6 +24,8 @@ import javax.servlet.http.HttpSession;
 import com.github.dockerjava.api.DockerClient;
 
 import org.apache.logging.log4j.Level;
+import org.gcszhn.server.ResponseResult.KeyResult;
+import org.gcszhn.server.ResponseResult.StatusResult;
 import org.gcszhn.system.security.RSAEncrypt;
 import org.gcszhn.system.service.DockerService;
 import org.gcszhn.system.service.UserDaoService;
@@ -39,12 +41,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import lombok.Data;
 /**
- * 暴露给前端的用户校验接口，当用户名、密码、访问节点均验证正确，予以建立HttpSession。
+ * 用户登录、登出等操作的控制器
+ * @author Zhang.H.N
+ * @version 1.0
  */
 @RestController
-public class Validation {
+public class UserAuthController {
     /**用户DAO服务 */
     @Autowired
     UserDaoService userDaoService;
@@ -55,17 +58,29 @@ public class Validation {
     @Autowired
     DockerService dockerService;
 
-    /**验证结果Bean对象 */
-    @Data
-    class Result {
-        private int status;
-    }
     /**Web请求对象 */
     @Autowired
     HttpServletRequest request;
-    /**接受验证请求的方法 */
+
+    /**获取RSA加密公钥 */
+    @GetMapping("/getkey")
+    public KeyResult doGetKey() {
+        request.getSession().invalidate();
+        HttpSession session = request.getSession();
+        //最多闲置10分钟不使用，一旦通过验证立刻失效
+        session.setMaxInactiveInterval(600);
+        String[] keypairs = new String[2];
+        RSAEncrypt.generateKeyPair(keypairs);
+        session.setAttribute("keypair", keypairs);
+        KeyResult kj = new KeyResult();
+        kj.setKey(keypairs[1]);
+        return kj;
+    }
+
+
+    /**验证账号 */
     @PostMapping("/validate")
-    public Result doValidate() {
+    public StatusResult doValidate() {
         HttpSession valSession = request.getSession(false);
         /**
          * 验证状态码
@@ -102,8 +117,8 @@ public class Validation {
                         if (user.getAliveNode() != null) {
                             valSession.invalidate(); //必须验证通过才失效，否则二次输入密码必须重新打开页面
                             HttpSession session = request.getSession();
-                            session.setAttribute("user", user);//绑定用户，写入Redis
                             session.setMaxInactiveInterval(3600*24);//会话有效期为1天
+                            userService.addOnlineUser(user, session, true);
                         } else {
                             status = -1;
                         }
@@ -115,14 +130,14 @@ public class Validation {
                 status = 4;
             }
         }
-        Result r = new Result();
+        StatusResult r = new StatusResult();
         r.setStatus(status);
         return r;
     }
     /**启动经过验证的容器 */
     @GetMapping("/init")
-    public Result doInit() {
-        Result res = new Result();
+    public StatusResult doInit() {
+        StatusResult res = new StatusResult();
         res.setStatus(1);
         try {
             HttpSession session = request.getSession(false);
@@ -133,62 +148,54 @@ public class Validation {
                 try (DockerClient dockerClient = dockerService.creatClient(
                     UserServiceImpl.getDomain()+"."+userNode.getHost(), 
                     dockerNode.getPort(), dockerNode.getApiVersion());) {
-                    dockerService.startContainer(dockerClient, UserServiceImpl.getTagPrefix()+user.getAccount());
-
-                    //测试内部程序是否启动
-                    while (true) {
-                        try {
-                            Thread.sleep(500);
-                            //发起连接测试
-                            HttpURLConnection connection = HttpRequest.getHttpURLConnection(
-                                String.format("http://%s.%d:%d/", 
-                                    UserServiceImpl.getDomain(),
-                                    userNode.getHost(),
-                                    userNode.getPortMap()[1][0]
-                                    ), "get");
-                            //获取状态码，如果连接失败，会抛出java.net.ConnectExeption extands IOException.
-                            connection.getResponseCode();
-                            break;
-                        } catch (IOException e) {
-                            continue;
+                    
+                    //若容器未启动，再启动容器。
+                    String name = UserServiceImpl.getTagPrefix()+user.getAccount();
+                    if (!dockerService.getContainerStatus(dockerClient, name)) {
+                        dockerService.startContainer(dockerClient, name);
+                        //测试内部程序是否启动
+                        while (true) {
+                            try {
+                                Thread.sleep(500);
+                                //发起连接测试
+                                HttpURLConnection connection = HttpRequest.getHttpURLConnection(
+                                    String.format("http://%s.%d:%d/", 
+                                        UserServiceImpl.getDomain(),
+                                        userNode.getHost(),
+                                        userNode.getPortMap()[1][0]
+                                        ), "get");
+                                //获取状态码，如果连接失败，会抛出java.net.ConnectExeption extands IOException.
+                                connection.getResponseCode();
+                                break;
+                            } catch (IOException e) {
+                                continue;
+                            }
                         }
+                        AppLog.printMessage("Start container successfully at node " + userNode.getHost());
+                    } else {
+                        AppLog.printMessage("Skipp running container at node " + userNode.getHost());
                     }
-                    AppLog.printMessage("Start container successfully at node " + userNode.getHost());
+                    
                     res.setStatus(0);
-                } catch (Exception e) {
-                    AppLog.printMessage(null, e, Level.ERROR);
                 }
-                /*
-                String cmd = String.format("docker -H %s.%d start %s", 
-                    UserServiceImpl.getDomain(), 
-                    node.getHost(), 
-                    UserServiceImpl.getTagPrefix()+user.getAccount());
-                ProcessInteraction.localExec((Process p) -> {
-                    while (true) {
-                        try {
-                            Thread.sleep(500);
-                            //发起连接测试
-                            HttpURLConnection connection = HttpRequest.getHttpURLConnection(
-                                String.format("http://%s.%d:%d/", 
-                                    UserServiceImpl.getDomain(),
-                                    node.getHost(),
-                                    node.getPortMap()[1][0]
-                                    ), "get");
-                            //获取状态码，如果连接失败，会抛出java.net.ConnectExeption extands IOException.
-                            connection.getResponseCode();
-                            break;
-                        } catch (IOException e) {
-                            continue;
-                        } catch (InterruptedException e) {
-                            AppLog.printMessage(null, e, Level.ERROR);
-                        }
-                    }
-                    AppLog.printMessage("Start container successfully at node " + node.getHost());
-                }, cmd.toString().split(" "));*/
             }
         } catch (Exception e) {
-            AppLog.printMessage(e.getMessage(), Level.ERROR);
+            AppLog.printMessage(null, e, Level.ERROR);
+        }
+        return res;
+    }
 
+    /**用户登出处理 */
+    @GetMapping("/logout")
+    public StatusResult doLogout() {
+        StatusResult res = new StatusResult();
+        res.setStatus(-1);
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            User user;
+            if ((user = (User) session.getAttribute("user"))!=null) {
+                res.setStatus(userService.removeOnlineUser(user.getAccount()));
+            }
         }
         return res;
     }

@@ -15,6 +15,8 @@
  */
 package org.gcszhn.system.service;
 
+import javax.servlet.http.HttpSession;
+
 import org.gcszhn.system.service.obj.User;
 import org.gcszhn.system.service.obj.UserMail;
 import org.gcszhn.system.service.obj.UserNode;
@@ -22,7 +24,7 @@ import org.gcszhn.system.service.obj.UserNode;
 /**
  * 用户处理类，处理与User类相关的操作
  * @author Zhang.H.N
- * @version 1.1
+ * @version 1.2
  */
 public interface UserService {
     /**
@@ -60,4 +62,26 @@ public interface UserService {
      * @param userMail 用户邮件配置
      */
     public void sendMailToAll(UserMail userMail);
+
+    /**获取在线人数 */
+    public int getOnlineUserCount();
+    /**
+     * 新增在线用户
+     * @param user 用户对象
+     * @param session 对应的会话对象
+     * @param overwrite 是否覆盖原有会话，true会覆盖，否则等于没有执行该命令
+     */
+    public void addOnlineUser(User user, HttpSession session, boolean overwrite);
+    /**
+     * 移除在线用户
+     * @param username 用户名
+     * @return 移除结果，0表示正常移除，1表示用户不在线，-1表示服务异常
+     */
+    public int removeOnlineUser(String username);
+    /**
+     * 用户是否在线
+     * @param username 用户名
+     * @return true表示在线，否表示不在线
+     */
+    public boolean isOnlineUser(String username);
 }

@@ -73,4 +73,12 @@ public interface DockerService {
      * @return Docker节点对象
      */
     public DockerNode getDockerNodeByHost(int host);
+
+    /**
+     * 获取容器的运行状态
+     * @param dockerClient docker客户端
+     * @param name 容器id或名称
+     * @return true代表在运行，false代表不运行
+     */
+    public boolean getContainerStatus(DockerClient dockerClient, String name);
 }

@@ -22,14 +22,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * 用户注册控制器
+ * @author Zhang.H.N
+ * @version 1.0
+ */
 @RestController
-public class Register {
+public class UserRegisterController {
     @Autowired
-    UserService ua;
+    UserService userService;
     @GetMapping("/register")
-    public User register(@RequestParam String ac, @RequestParam String pwd, @RequestParam String address) {
-        User user = ua.createUser(ac, pwd, address);
-        ua.registerAccount(user);
+    public User doRegister(@RequestParam String ac, @RequestParam String pwd, @RequestParam String address) {
+        User user = userService.createUser(ac, pwd, address);
+        userService.registerAccount(user);
         return user;
     }
 }

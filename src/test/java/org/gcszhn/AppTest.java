@@ -270,8 +270,9 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
                 "/public/home/test:/public/home/test",
                 "/public/packages:/public/packages"
             );
-        System.out.println(dockerService.getDockerNodeByHost(41).getImage());;
+        //System.out.println(dockerService.getDockerNodeByHost(41).getImage());;
         dockerService.createContainer(client,config);
+        System.out.println(dockerService.getContainerStatus(client, "MULTIPLE1.1-test"));
         dockerService.deleteContainer(client, "MULTIPLE1.1-test");
     }
 }
