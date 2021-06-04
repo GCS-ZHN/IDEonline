@@ -15,11 +15,13 @@
  */
 package org.gcszhn;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import com.github.dockerjava.api.DockerClient;
 
@@ -250,9 +252,10 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
         }, ("docker -H "+ UserServiceImpl.getDomain()+ ".41 start MULTIPLE1.1-lumk").split(" "));
     }
     @Test
-    public void testDockerService() {
+    public void testDockerContainer() throws IOException {
         DockerClient client = dockerService.creatClient(
             "172.16.10.41", 2375, DockerServiceImpl.getDefaultApiVersion());
+            
         DockerContainerConfig config = new DockerContainerConfig(
             "zhanghn/multiple:v1.1", "MULTIPLE1.1-test", true)
             .withCmdArgs("test")
@@ -274,6 +277,32 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
         dockerService.createContainer(client,config);
         System.out.println(dockerService.getContainerStatus(client, "MULTIPLE1.1-test"));
         dockerService.deleteContainer(client, "MULTIPLE1.1-test");
+        client.close();
+    }
+    @Test
+    public void testDockerExec() throws IOException {
+        DockerClient client = dockerService.creatClient(
+            "172.16.10.41", 2375, DockerServiceImpl.getDefaultApiVersion());
+            /*
+        dockerService.execBackgroundJobs(client, 
+        "MULTIPLE1.1-zhanghn",
+        20,
+        TimeUnit.SECONDS, 
+        "/usr/lib/jvm/jdk-14.0.2/bin/java",
+        "-jar",
+        "/public/home/zhanghn/VScodeProject/Java/Own/public/IDEonline-spring/release/IDEonline-1.3.2.jar"
+        );*/
+
+        dockerService.execBackgroundJobs(
+            client, 
+            "MULTIPLE1.1-zhanghn", 
+            10, 
+            TimeUnit.SECONDS,
+            null,
+            new FileOutputStream("test2.log"),
+            new FileOutputStream("errr.log"),
+            "nvida-smi");
+        client.close();
     }
 }
 

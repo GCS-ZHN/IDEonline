@@ -16,12 +16,14 @@
 package org.gcszhn.system.service.impl;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 import javax.servlet.http.HttpSession;
 
 import com.github.dockerjava.api.DockerClient;
 
 import org.apache.logging.log4j.Level;
+import org.gcszhn.server.ResponseResult.StatusResult;
 import org.gcszhn.system.config.ConfigException;
 import org.gcszhn.system.config.JSONConfig;
 import org.gcszhn.system.service.DockerService;
@@ -50,7 +52,7 @@ import lombok.Getter;
  * 用户服务接口扩展类
  * 
  * @author Zhang.H.N
- * @version 1.3
+ * @version 1.4
  */
 @Service
 public class UserServiceImpl implements UserService {
@@ -80,8 +82,10 @@ public class UserServiceImpl implements UserService {
     /** Docker主机IP域 */
     @Getter
     private static String domain;
-    /**在线用户统计 */
-    private HashMap <String, HttpSession> onlineUsers = new HashMap<>();
+    /** 在线用户统计 */
+    private HashMap<String, HttpSession> onlineUsers = new HashMap<>();
+    /** 用户后台任务统计 */
+    private HashMap<String, HashSet<StatusResult>> userJobs = new HashMap<>();
 
     @Autowired
     public void setDomain(JSONConfig jsonConfig) {
@@ -225,20 +229,24 @@ public class UserServiceImpl implements UserService {
     public synchronized void addOnlineUser(User user, HttpSession session, boolean overwrite) {
         try {
             HttpSession oldSession = onlineUsers.get(user.getAccount());
-            user.addUserListener(new UserOnlineListener());//添加用户在线监听
-            if (oldSession != null && overwrite) { //覆盖旧有记录
-                oldSession.invalidate();           //同时只允许一个在线
-                session.setAttribute("user", user);//会话绑定用户，写入Redis
+            user.addUserListener(new UserOnlineListener());// 添加用户在线监听
+            if (oldSession != null && overwrite) { // 覆盖旧有记录
+                session.setAttribute("user", user);// 会话绑定用户，写入Redis
                 onlineUsers.put(user.getAccount(), session);
-            } else if (oldSession == null) {       //新建记录
+                oldSession.invalidate(); // 同时只允许一个在线
+            } else if (oldSession == null) { // 新建记录
                 onlineUsers.put(user.getAccount(), session);
-                session.setAttribute("user", user);//会话绑定用户，写入Redis
+                session.setAttribute("user", user);// 会话绑定用户，写入Redis
                 user.notifyUserListener(new UserEvent(user, UserAction.LOGIN));
-            } else {  //无效添加, 销毁新的会话，释放tomcat资源
+            } else { // 无效添加, 销毁新的会话，释放tomcat资源
                 session.invalidate();
             }
         } catch (Exception e) {
-            AppLog.printMessage(null, e, Level.ERROR);
+            if (e instanceof IllegalStateException) {
+                AppLog.printMessage(e.getMessage());
+            } else {
+                AppLog.printMessage(null, e, Level.ERROR);
+            }
         }
 
     }
@@ -248,14 +256,14 @@ public class UserServiceImpl implements UserService {
         int status = 0;
         try {
             if (onlineUsers.containsKey(username)) {
-                //从会话中获取注册了用户监听器的用户对象
+                // 从会话中获取注册了用户监听器的用户对象
                 HttpSession session = onlineUsers.remove(username);
                 User user = (User) session.getAttribute("user");
-                AppLog.printMessage(username+" is removed from online map");
+                AppLog.printMessage(username + " is removed from online map");
                 user.notifyUserListener(new UserEvent(user, UserAction.LOGOUT));
             } else {
                 status = 1;
-                AppLog.printMessage(username+" is not online yet");
+                AppLog.printMessage(username + " is not online yet");
             }
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
@@ -267,11 +275,42 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean isOnlineUser(String username) {
         try {
-            return onlineUsers.containsKey(username) 
-            && onlineUsers.get(username) != null;
+            return onlineUsers.containsKey(username) && onlineUsers.get(username) != null;
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
             return false;
         }
+    }
+
+    @Override
+    public void addUserBackgroundJob(String username, StatusResult jobStatus) {
+        HashSet<StatusResult> list = userJobs.get(username);
+        if (list == null)  {
+            list = new HashSet<>(1);
+            userJobs.put(username, list);
+        }
+        list.add(jobStatus);
+    }
+
+    @Override
+    public void removeUserBackgroundJob(String username, StatusResult jobStatus) {
+        HashSet<StatusResult> list = userJobs.get(username);
+        if (list != null) {
+            list.remove(jobStatus);
+            if (list.isEmpty()) userJobs.remove(username);
+        }
+
+    }
+
+    @Override
+    public int getUserBackgroundJobCount(String username) {
+        HashSet<StatusResult> list = userJobs.get(username);
+        return list==null?0:list.size();
+    }
+
+    @Override
+    public boolean hasUserBackgroundJob(String username) {
+        HashSet<StatusResult> list = userJobs.get(username);
+        return list!=null&&!list.isEmpty();
     }
 }

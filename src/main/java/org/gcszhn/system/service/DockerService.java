@@ -15,6 +15,10 @@
  */
 package org.gcszhn.system.service;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.concurrent.TimeUnit;
+
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 
@@ -81,4 +85,24 @@ public interface DockerService {
      * @return true代表在运行，false代表不运行
      */
     public boolean getContainerStatus(DockerClient dockerClient, String name);
+    /**
+     * 向Docker容器发起命令执行请求
+     * @param dockerClient docker客户端对象
+     * @param name docker容器ID或名称
+     * @param timeout 超时时间，超过会结束当前线程，但后台线程任然运行
+     * @param unit 超时时间单位
+     * @param inputStream 标准输入流
+     * @param outputStream 标准输出流
+     * @param cmd 后台命令
+     * @return 命令启动状态码
+     */
+    public int execBackgroundJobs(
+        DockerClient dockerClient, 
+        String name, 
+        long timeout, 
+        TimeUnit unit,
+        InputStream inputStream,
+        OutputStream outputStream,
+        OutputStream errStream,
+        String... cmd);
 }

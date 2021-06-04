@@ -15,17 +15,22 @@
  */
 package org.gcszhn.system.service.impl;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.DeviceRequest;
+import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
@@ -210,6 +215,46 @@ public class DockerServiceImpl implements DockerService {
             AppLog.printMessage(null, e, Level.ERROR);
             return false;
         }
-        
+    }
+    @Override
+    public int execBackgroundJobs(
+        DockerClient dockerClient, String name, 
+        long timeout, TimeUnit unit, InputStream inputStream, OutputStream errStream,
+        OutputStream outputStream, String... cmd) {
+        try {
+            String exeId = dockerClient.execCreateCmd(name)
+                .withCmd(cmd)
+                .withAttachStdin(true)
+                .withAttachStdout(true)
+                .withAttachStderr(true)
+                .withTty(true)
+                .exec().getId();
+
+            //过程是异步执行的，故需要await, 当前线程等待子线程完成，即调用onComplete回调
+            dockerClient.execStartCmd(exeId).withStdIn(inputStream)
+                .exec(new ResultCallback.Adapter<Frame>() {
+                    //重写onNext回调，输出信息
+                    @Override
+                    public void onNext(Frame object) {
+                        try {
+                            switch(object.getStreamType()) {
+                                case STDERR:{
+                                    errStream.write(object.getPayload());
+                                    break;
+                                } case STDOUT: {
+                                    outputStream.write(object.getPayload());
+                                    break;
+                                }default: break;
+                            }
+                        } catch (Exception e) {
+                            AppLog.printMessage(null, e, Level.ERROR);
+                        }
+                    }
+                }).awaitCompletion(timeout, unit);
+                return 0;
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
+            return 1;
+        }
     }
 }
