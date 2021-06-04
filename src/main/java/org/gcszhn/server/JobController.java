@@ -16,9 +16,10 @@ import org.gcszhn.system.service.UserService;
 import org.gcszhn.system.service.impl.UserServiceImpl;
 import org.gcszhn.system.service.obj.DockerNode;
 import org.gcszhn.system.service.obj.User;
+import org.gcszhn.system.service.obj.UserJob;
 import org.gcszhn.system.service.until.AppLog;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -47,7 +48,7 @@ public class JobController {
      * @param cmd 后台命令字符串
      * @return 提交状态
      */
-    @PostMapping("/submitjob")
+    @GetMapping("/submit")
     public StatusResult doSubmitJob(
         @RequestParam String stdinf, 
         @RequestParam String stdoutf, 
@@ -55,7 +56,7 @@ public class JobController {
         @RequestParam String cmd) {
 
         StatusResult res = new StatusResult();
-        res.setStatus(-1);
+        res.setStatus(1);
         HttpSession session = request.getSession(false);
         if (session !=null) {
             User user = (User) session.getAttribute("user");
@@ -70,23 +71,31 @@ public class JobController {
                            dockerNode.getPort(),
                            dockerNode.getApiVersion()
                            )) {
-                            //标准输入，没有则为null
-                            FileInputStream stdin = (stdinf==null)?null:new FileInputStream(
+                            /**用户任务实例 */
+                            UserJob userJob = new UserJob();
+                            userJob.setStatus(1);
+                            userJob.setId("background"+userJob.hashCode());
+                            userJob.setCmd(cmd);
+                            userJob.setUser(user);
+                            userJob.setStdinfile(stdinf);
+                            userJob.setStdoutfile(stdoutf);
+
+                            FileInputStream stdin = null;
+                            if (!stdinf.equals("") && stdinf!=null) stdin = new FileInputStream(
                                 "/public/home/"+user.getAccount()
                                 + (stdinf.startsWith("/")?stdinf:"/"+stdinf)
                             );
                             //标准错误，固定为一个用户目录下一个随机文件
                             FileOutputStream stderr = new FileOutputStream(
-                                "/public/home/"+user.getAccount()+"/background"+ dockerClient.hashCode()+".log");
+                                "/public/home/"+user.getAccount()+"/"+userJob.getId()+".log");
                             //标准输出，没有指定则合并到标准错误
-                            FileOutputStream stdout =(stdoutf==null)?stderr:new FileOutputStream(
+                            FileOutputStream stdout = null;
+                            if (!stdoutf.equals("") && stdoutf!=null) stdout = new FileOutputStream(
                                 "/public/home/"+user.getAccount()
-                                + (stdoutf.startsWith("/")?stdoutf:"/"+stdinf)
+                                + (stdoutf.startsWith("/")?stdoutf:"/"+stdoutf)
                             );
-                            StatusResult jobStatus = new StatusResult();
-                            jobStatus.setStatus(1);
-                            userService.addUserBackgroundJob(user.getAccount(), jobStatus);
 
+                            userService.addUserBackgroundJob(user.getAccount(), userJob);
                             dockerService.execBackgroundJobs(
                                 dockerClient,
                                 UserServiceImpl.getTagPrefix()+user.getAccount(), 
@@ -97,13 +106,14 @@ public class JobController {
                                 stderr, 
                                 cmd.split("\\s+")
                                 );
-                            jobStatus.setStatus(0);
-                            userService.removeUserBackgroundJob(user.getAccount(), jobStatus);
+                            userJob.setStatus(0);
+                            userService.removeUserBackgroundJob(user.getAccount(), userJob);
                        } catch (Exception e) {
                            AppLog.printMessage(null, e, Level.ERROR);
                        } 
                     }
                 ).start();
+                res.setStatus(0);
             } 
         }
         return res;

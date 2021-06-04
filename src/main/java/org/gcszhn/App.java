@@ -20,6 +20,7 @@ import javax.annotation.PreDestroy;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.system.ApplicationPidFileWriter;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
@@ -28,7 +29,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * @version 1.0
  */
 @SpringBootApplication
-@EnableTransactionManagement
+@EnableTransactionManagement  //启用事务管理
+@EnableAsync                  //启用异步方法
 public class App {
     public static void main(String[] args) {
         //SpringApplication.run(App.class, args);

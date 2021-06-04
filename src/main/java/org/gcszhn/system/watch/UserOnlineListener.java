@@ -19,6 +19,7 @@ import com.github.dockerjava.api.DockerClient;
 
 import org.apache.logging.log4j.Level;
 import org.gcszhn.system.service.DockerService;
+import org.gcszhn.system.service.UserService;
 import org.gcszhn.system.service.impl.UserServiceImpl;
 import org.gcszhn.system.service.obj.DockerNode;
 import org.gcszhn.system.service.obj.User;
@@ -28,7 +29,6 @@ import org.gcszhn.system.service.until.SpringTools;
 
 /**
  * 用户在线情况监听器
- * 
  * @author Zhang.H.N
  * @version 1.0
  */
@@ -46,6 +46,16 @@ public class UserOnlineListener implements UserListener {
     public void userLogout(UserEvent ue) {
         try {
             User user = ue.getUser();
+            UserService userService = SpringTools.getBean(UserService.class);
+            //等待后台任务完成
+            while (userService.hasUserBackgroundJob(user.getAccount())) {
+                synchronized (userService) {
+                    userService.wait();
+                }
+            }
+            //若任务完成前已经重新登录，停止退出
+            if (userService.isOnlineUser(user.getAccount())) return;
+
             DockerService dockerService = SpringTools.getBean(DockerService.class);
             UserNode aliveNode = user.getAliveNode();
             DockerNode dockerNode = dockerService.getDockerNodeByHost(aliveNode.getHost());

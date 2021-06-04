@@ -23,7 +23,6 @@ import javax.servlet.http.HttpSession;
 import com.github.dockerjava.api.DockerClient;
 
 import org.apache.logging.log4j.Level;
-import org.gcszhn.server.ResponseResult.StatusResult;
 import org.gcszhn.system.config.ConfigException;
 import org.gcszhn.system.config.JSONConfig;
 import org.gcszhn.system.service.DockerService;
@@ -35,6 +34,7 @@ import org.gcszhn.system.service.VelocityService;
 import org.gcszhn.system.service.obj.DockerContainerConfig;
 import org.gcszhn.system.service.obj.DockerNode;
 import org.gcszhn.system.service.obj.User;
+import org.gcszhn.system.service.obj.UserJob;
 import org.gcszhn.system.service.obj.UserMail;
 import org.gcszhn.system.service.obj.UserNode;
 import org.gcszhn.system.service.obj.User.UserAction;
@@ -58,17 +58,19 @@ import lombok.Getter;
 public class UserServiceImpl implements UserService {
     /** DAO服务 */
     @Autowired
-    @Getter
     private UserDaoService userDaoService;
     /** 邮件服务 */
     @Autowired
-    MailService mailService;
+    private MailService mailService;
     /** 模板引擎服务 */
     @Autowired
-    VelocityService velocityService;
+    private VelocityService velocityService;
     /** Docker服务 */
     @Autowired
-    DockerService dockerService;
+    private DockerService dockerService;
+    /** Redis服务 */
+    @Autowired
+    private RedisService redisService;
 
     /** Nginx配置模板 */
     @Value("${nginx.temp}")
@@ -79,13 +81,17 @@ public class UserServiceImpl implements UserService {
     /** Nginx主机 */
     @Value("${nginx.host}")
     private String nginxHost;
-    /** Docker主机IP域 */
-    @Getter
-    private static String domain;
     /** 在线用户统计 */
     private HashMap<String, HttpSession> onlineUsers = new HashMap<>();
     /** 用户后台任务统计 */
-    private HashMap<String, HashSet<StatusResult>> userJobs = new HashMap<>();
+    private HashMap<String, HashSet<UserJob>> userJobs = new HashMap<>();
+
+    /** Docker主机IP域 */
+    @Getter
+    private static String domain;
+    /** Docker容器标签前缀 */
+    @Getter
+    private static String tagPrefix;
 
     @Autowired
     public void setDomain(JSONConfig jsonConfig) {
@@ -94,11 +100,6 @@ public class UserServiceImpl implements UserService {
             throw new ConfigException("docker.domain");
         }
     }
-
-    /** Docker容器标签前缀 */
-    @Getter
-    private static String tagPrefix;
-
     /** 配置docker容器标签前缀 */
     @Autowired
     public void setTagPrefix(JSONConfig jsonConfig) {
@@ -107,10 +108,6 @@ public class UserServiceImpl implements UserService {
             throw new ConfigException("docker.prefix");
         }
     }
-
-    /** Redis服务 */
-    @Autowired
-    private RedisService redisService;
 
     @Override
     public User createUser(String account, String password, String address, UserNode... nodeConfigs) {
@@ -248,7 +245,6 @@ public class UserServiceImpl implements UserService {
                 AppLog.printMessage(null, e, Level.ERROR);
             }
         }
-
     }
 
     @Override
@@ -283,34 +279,48 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void addUserBackgroundJob(String username, StatusResult jobStatus) {
-        HashSet<StatusResult> list = userJobs.get(username);
-        if (list == null)  {
-            list = new HashSet<>(1);
-            userJobs.put(username, list);
+    public synchronized void addUserBackgroundJob(String username, UserJob userJob) {
+        try {
+            HashSet<UserJob> list = userJobs.get(username);
+            if (list == null)  {
+                list = new HashSet<>(1);
+                userJobs.put(username, list);
+            }
+            list.add(userJob);
+            AppLog.printMessage(String.format("job %s for user %s with cmd: '%s' added", userJob.getId(), username, userJob.getCmd()));
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
         }
-        list.add(jobStatus);
     }
 
     @Override
-    public void removeUserBackgroundJob(String username, StatusResult jobStatus) {
-        HashSet<StatusResult> list = userJobs.get(username);
-        if (list != null) {
-            list.remove(jobStatus);
-            if (list.isEmpty()) userJobs.remove(username);
+    public synchronized void removeUserBackgroundJob(String username, UserJob userJob) {
+        try {
+            HashSet<UserJob> list = userJobs.get(username);
+            if (list != null) {
+                list.remove(userJob);
+                if (list.isEmpty()) userJobs.remove(username);
+            }
+            
+            //用户不存在任务，通知用户监听器，允许关闭容器
+            if (!hasUserBackgroundJob(username)) {
+                notifyAll(); 
+            }
+            AppLog.printMessage(String.format("job %s for user %s with cmd: '%s' removed", userJob.getId(), username, userJob.getCmd()));
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
         }
-
     }
 
     @Override
     public int getUserBackgroundJobCount(String username) {
-        HashSet<StatusResult> list = userJobs.get(username);
+        HashSet<UserJob> list = userJobs.get(username);
         return list==null?0:list.size();
     }
 
     @Override
     public boolean hasUserBackgroundJob(String username) {
-        HashSet<StatusResult> list = userJobs.get(username);
+        HashSet<UserJob> list = userJobs.get(username);
         return list!=null&&!list.isEmpty();
     }
 }

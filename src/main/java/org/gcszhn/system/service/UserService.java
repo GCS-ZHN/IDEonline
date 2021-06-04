@@ -17,8 +17,8 @@ package org.gcszhn.system.service;
 
 import javax.servlet.http.HttpSession;
 
-import org.gcszhn.server.ResponseResult.StatusResult;
 import org.gcszhn.system.service.obj.User;
+import org.gcszhn.system.service.obj.UserJob;
 import org.gcszhn.system.service.obj.UserMail;
 import org.gcszhn.system.service.obj.UserNode;
 
@@ -88,15 +88,15 @@ public interface UserService {
     /**
      * 添加用户后台任务记录
      * @param username 用户名
-     * @param jobStatus 任务状态对象
+     * @param userJob 用户任务实例
      */
-    public void addUserBackgroundJob(String username, StatusResult jobStatus);
+    public void addUserBackgroundJob(String username, UserJob userJob);
     /**
      * 移除用户后台任务记录
      * @param username 用户名
-     * @param jobStatus 任务状态对象
+     * @param userJob 用户任务实例
      */
-    public void removeUserBackgroundJob(String username, StatusResult jobStatus);
+    public void removeUserBackgroundJob(String username, UserJob userJob);
     /**
      * 获取用户后台任务数量
      * @param username 用户名

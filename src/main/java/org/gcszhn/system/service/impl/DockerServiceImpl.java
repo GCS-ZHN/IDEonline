@@ -219,8 +219,8 @@ public class DockerServiceImpl implements DockerService {
     @Override
     public int execBackgroundJobs(
         DockerClient dockerClient, String name, 
-        long timeout, TimeUnit unit, InputStream inputStream, OutputStream errStream,
-        OutputStream outputStream, String... cmd) {
+        long timeout, TimeUnit unit, InputStream inputStream,
+        OutputStream outputStream, OutputStream errStream, String... cmd) {
         try {
             String exeId = dockerClient.execCreateCmd(name)
                 .withCmd(cmd)
