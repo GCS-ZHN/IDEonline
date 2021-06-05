@@ -219,6 +219,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public HttpSession getUserSession(String username) {
+        return this.onlineUsers.get(username);
+    }
+
+    @Override
     public int getOnlineUserCount() {
         return onlineUsers.size();
     }
@@ -228,45 +233,44 @@ public class UserServiceImpl implements UserService {
         try {
             HttpSession oldSession = onlineUsers.get(user.getAccount());
             user.addUserListener(new UserOnlineListener());// 添加用户在线监听
-            if (oldSession != null && overwrite) { // 覆盖旧有记录
-                session.setAttribute("user", user);// 会话绑定用户，写入Redis
+
+            //只允许一个会话在线
+            if (oldSession != null && overwrite) {
+                //绑定新会话，再解绑旧会话，防止容器关闭
+                session.setAttribute("user", user);
                 onlineUsers.put(user.getAccount(), session);
-                oldSession.invalidate(); // 同时只允许一个在线
-            } else if (oldSession == null) { // 新建记录
+                AppLog.printMessage(user.getAccount()+ " is added to online map");
+                //解绑旧会话，注意不要直接使用invalidate，否则可能抛出异常
+                oldSession.setMaxInactiveInterval(0);
+            } else if (oldSession == null) { 
                 onlineUsers.put(user.getAccount(), session);
-                session.setAttribute("user", user);// 会话绑定用户，写入Redis
+                session.setAttribute("user", user);
                 user.notifyAsyncUserListener(new UserEvent(user, UserAction.LOGIN));
+                AppLog.printMessage(user.getAccount()+ " is added to online map");
             } else { // 无效添加, 销毁新的会话，释放tomcat资源
                 session.invalidate();
             }
+            AppLog.printMessage("Current online count: " + getOnlineUserCount());
         } catch (Exception e) {
-            if (e instanceof IllegalStateException) {
-                AppLog.printMessage(e.getMessage());
-            } else {
-                AppLog.printMessage(null, e, Level.ERROR);
-            }
+            AppLog.printMessage(null, e, Level.ERROR);
         }
     }
 
     @Override
-    public synchronized int removeOnlineUser(String username) {
+    public synchronized int removeOnlineUser(User user) {
         int status = 0;
         try {
-            if (onlineUsers.containsKey(username)) {
-                // 从会话中获取注册了用户监听器的用户对象
-                HttpSession session = onlineUsers.remove(username);
-                User user = (User) session.getAttribute("user");
-                AppLog.printMessage(username + " is removed from online map");
+            if (onlineUsers.containsKey(user.getAccount())) {
+                onlineUsers.remove(user.getAccount());
+                AppLog.printMessage(user.getAccount()+ " is removed from online map");
 
                 //异步通知用户监听器，注销用户
                 user.notifyAsyncUserListener(new UserEvent(user, UserAction.LOGOUT));
-                session.invalidate();
             } else {
                 status = 1;
-                AppLog.printMessage(username + " is not online yet");
+                AppLog.printMessage(user.getAccount() + " is not online yet");
             }
-        } catch (IllegalStateException e) {
-            AppLog.printMessage(e.getMessage());
+            AppLog.printMessage("Current online count: " + getOnlineUserCount());
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
             status = -1;
@@ -277,6 +281,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean isOnlineUser(String username) {
         try {
+            AppLog.printMessage("Current online count: " + getOnlineUserCount());
             return onlineUsers.containsKey(username) && onlineUsers.get(username) != null;
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);

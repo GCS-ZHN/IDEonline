@@ -23,7 +23,9 @@ import javax.servlet.http.HttpSessionBindingListener;
 
 import org.apache.logging.log4j.Level;
 import org.gcszhn.system.service.RedisService;
+import org.gcszhn.system.service.UserService;
 import org.gcszhn.system.service.until.AppLog;
+import org.gcszhn.system.service.until.SpringTools;
 import org.gcszhn.system.watch.UserEvent;
 import org.gcszhn.system.watch.UserListener;
 
@@ -105,7 +107,7 @@ public class User implements HttpSessionBindingListener, Serializable {
                 "session", 
                 event.getSession().getId(), 
                 getAliveNode().getHost() + portset);
-            AppLog.printMessage("Add user to redis with session successfully");
+            AppLog.printMessage("Add user to redis successfully");
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         }
@@ -115,6 +117,17 @@ public class User implements HttpSessionBindingListener, Serializable {
     public void valueUnbound(HttpSessionBindingEvent event) {
         try {
             redisService.redisHdel("session", event.getSession().getId());
+            UserService userService = SpringTools.getBean(UserService.class);
+
+            /**
+             * 加锁防止用户登出前，已经重新登录
+             */
+            synchronized(userService) {
+                if (event.getSession() == userService.getUserSession(getAccount())) {
+                    userService.removeOnlineUser(this);
+                }
+            }
+            AppLog.printMessage("Remove user from redis successfully");
         } catch (NullPointerException e) {
             AppLog.printMessage(null, e, Level.ERROR);
             

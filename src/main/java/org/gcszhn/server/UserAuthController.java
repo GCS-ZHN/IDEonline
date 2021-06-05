@@ -65,6 +65,7 @@ public class UserAuthController {
     /**获取RSA加密公钥 */
     @GetMapping("/getkey")
     public KeyResult doGetKey() {
+        //登录后再getkey，会注销原先账号
         request.getSession().invalidate();
         HttpSession session = request.getSession();
         //最多闲置10分钟不使用，一旦通过验证立刻失效
@@ -151,31 +152,28 @@ public class UserAuthController {
                     
                     //若容器未启动，再启动容器。
                     String name = UserServiceImpl.getTagPrefix()+user.getAccount();
-                    if (!dockerService.getContainerStatus(dockerClient, name)) {
-                        dockerService.startContainer(dockerClient, name);
-                        //测试内部程序是否启动
-                        while (true) {
-                            try {
-                                Thread.sleep(500);
-                                //发起连接测试
-                                HttpURLConnection connection = HttpRequest.getHttpURLConnection(
-                                    String.format("http://%s.%d:%d/", 
-                                        UserServiceImpl.getDomain(),
-                                        userNode.getHost(),
-                                        userNode.getPortMap()[1][0]
-                                        ), "get");
-                                //获取状态码，如果连接失败，会抛出java.net.ConnectExeption extands IOException.
-                                connection.getResponseCode();
-                                break;
-                            } catch (IOException e) {
-                                continue;
-                            }
-                        }
-                        AppLog.printMessage("Start container successfully at node " + userNode.getHost());
-                    } else {
-                        AppLog.printMessage("Skipp running container at node " + userNode.getHost());
-                    }
                     
+                    dockerService.startContainer(dockerClient, name);
+                    //测试内部程序是否启动
+                    while (true) {
+                        try {
+                            Thread.sleep(500);
+                            //发起连接测试
+                            HttpURLConnection connection = HttpRequest.getHttpURLConnection(
+                                String.format("http://%s.%d:%d/", 
+                                    UserServiceImpl.getDomain(),
+                                    userNode.getHost(),
+                                    userNode.getPortMap()[1][0]
+                                    ), "get");
+                            //获取状态码，如果连接失败，会抛出java.net.ConnectExeption extands IOException.
+                            connection.getResponseCode();
+                            break;
+                        } catch (IOException e) {
+                            continue;
+                        }
+                    }
+                    AppLog.printMessage("Start container successfully at node " + userNode.getHost());
+
                     res.setStatus(0);
                 }
             }
@@ -192,9 +190,11 @@ public class UserAuthController {
         res.setStatus(-1);
         HttpSession session = request.getSession(false);
         if (session != null) {
-            User user;
-            if ((user = (User) session.getAttribute("user"))!=null) {
-                res.setStatus(userService.removeOnlineUser(user.getAccount()));
+            if (session.getAttribute("user")!=null) {
+                session.invalidate();
+                res.setStatus(0);
+            } else {
+                res.setStatus(1);
             }
         }
         return res;

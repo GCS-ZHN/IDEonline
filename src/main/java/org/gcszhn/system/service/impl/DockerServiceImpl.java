@@ -52,7 +52,7 @@ import lombok.Getter;
 /**
  * Docker服务的接口实现
  * @author Zhang.H.N
- * @version 1.0
+ * @version 1.3
  */
 @Service
 public class DockerServiceImpl implements DockerService {
@@ -114,7 +114,7 @@ public class DockerServiceImpl implements DockerService {
     }
     //@SuppressWarnings("deprecation") 此处吐槽原作者一百遍，能不能好好提供一下API文档，过时了把替代说清楚啊
     @Override
-    public CreateContainerResponse createContainer(DockerClient dockerClient, DockerContainerConfig config) {
+    public synchronized CreateContainerResponse createContainer(DockerClient dockerClient, DockerContainerConfig config) {
         CreateContainerResponse container = null;
         try {
             /**
@@ -159,7 +159,7 @@ public class DockerServiceImpl implements DockerService {
         return container;
     }
     @Override
-    public void deleteContainer(DockerClient dockerClient, String name) {
+    public synchronized void deleteContainer(DockerClient dockerClient, String name) {
         try {
             dockerClient.removeContainerCmd(name).withForce(true).exec();
             AppLog.printMessage("Container " + name +  " is removed successfully");
@@ -168,19 +168,27 @@ public class DockerServiceImpl implements DockerService {
         }
     }
     @Override
-    public void startContainer(DockerClient dockerClient, String name) {
+    public synchronized void startContainer(DockerClient dockerClient, String name) {
         try {
-            dockerClient.startContainerCmd(name).exec();
-            AppLog.printMessage("Container " + name +  " is started successfully");
+            if (!getContainerStatus(dockerClient, name)) {
+                dockerClient.startContainerCmd(name).exec();
+                AppLog.printMessage("Container " + name +  " is started successfully");
+            } else {
+                AppLog.printMessage("Skipp running container " + name);
+            }
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         }
     }
     @Override
-    public void stopContainer(DockerClient dockerClient, String name) {
+    public synchronized void stopContainer(DockerClient dockerClient, String name) {
         try {
-            dockerClient.stopContainerCmd(name).exec();
-            AppLog.printMessage("Container " + name +  " is stopped successfully");
+            if (getContainerStatus(dockerClient, name)) {
+                dockerClient.stopContainerCmd(name).exec();
+                AppLog.printMessage("Container " + name +  " is stopped successfully");
+            } else {
+                AppLog.printMessage("Skipp stopped container " + name);
+            }
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         }

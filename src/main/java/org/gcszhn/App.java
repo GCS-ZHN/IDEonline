@@ -32,7 +32,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  */
 @SpringBootApplication
 @EnableTransactionManagement  //启用事务管理
-@EnableAsync                  //启用异步方法
+@EnableAsync                  //Bean组件启用异步方法
 public class App {
     /**配置内容 */
     @Autowired
@@ -47,7 +47,8 @@ public class App {
     @PreDestroy
     public void preDestroy() {
         //关闭tomcat、log4j和其他资源，销毁对象
-        SpringApplication.exit(context);
+        //https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#features.spring-application.application-exit
+        //SpringApplication.exit(context);
         System.out.println("Application exited");
     }
 }

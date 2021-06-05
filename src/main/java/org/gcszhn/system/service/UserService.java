@@ -66,7 +66,12 @@ public interface UserService {
      * @param userMail 用户邮件配置
      */
     public void sendMailToAll(UserMail userMail);
-
+    /**
+     * 获取指定用户的在线会话
+     * @param username 用户名
+     * @return Http会话对象
+     */
+    public HttpSession getUserSession(String username);
     /**获取在线人数 */
     public int getOnlineUserCount();
     /**
@@ -77,11 +82,11 @@ public interface UserService {
      */
     public void addOnlineUser(User user, HttpSession session, boolean overwrite);
     /**
-     * 移除在线用户
-     * @param username 用户名
+     * 移除在线用户，一般是HttpSession过期，user属性解绑时调用。
+     * @param user 用户对象，是httpSession的user属性
      * @return 移除结果，0表示正常移除，1表示用户不在线，-1表示服务异常
      */
-    public int removeOnlineUser(String username);
+    public int removeOnlineUser(User user);
     /**
      * 用户是否在线
      * @param username 用户名

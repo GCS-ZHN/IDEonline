@@ -53,22 +53,32 @@ public class UserOnlineListener implements UserListener {
                     userService.wait();
                 }
             }
-            //若任务完成前已经重新登录，停止退出
-            if (userService.isOnlineUser(user.getAccount())) return;
 
-            DockerService dockerService = SpringTools.getBean(DockerService.class);
-            UserNode aliveNode = user.getAliveNode();
-            DockerNode dockerNode = dockerService.getDockerNodeByHost(aliveNode.getHost());
+            /**
+             * 建立docker服务连接，关闭容器
+             * 获取服务的锁，保证正常关闭不受到干扰
+             */
+            synchronized(userService) {
+                //延迟10秒开始关闭，若期间被其他线程获取锁，可以终止关闭容器
+                userService.wait(10000);
 
-            //建立docker服务连接，关闭容器
-            try (DockerClient dockerClient = dockerService.creatClient(
-                UserServiceImpl.getDomain()+"."+aliveNode.getHost(), 
-                dockerNode.getPort(), dockerNode.getApiVersion())) {
-                    dockerService.stopContainer(dockerClient, 
-                        UserServiceImpl.getTagPrefix()+user.getAccount());
+                //若获取锁前，已经重新登录，停止退出
+                if (userService.isOnlineUser(user.getAccount())) return;
+
+                //正式开始关闭服务
+                DockerService dockerService = SpringTools.getBean(DockerService.class);
+                UserNode aliveNode = user.getAliveNode();
+                DockerNode dockerNode = dockerService.getDockerNodeByHost(aliveNode.getHost());
+                try (DockerClient dockerClient = dockerService.creatClient(
+                    UserServiceImpl.getDomain()+"."+aliveNode.getHost(), 
+                    dockerNode.getPort(), dockerNode.getApiVersion())) {
+                        dockerService.stopContainer(dockerClient, 
+                            UserServiceImpl.getTagPrefix()+user.getAccount());
+                }
+                AppLog.printMessage(
+                    String.format("%s's container at %d closed", 
+                    user.getAccount(), aliveNode.getHost()));
             }
-            AppLog.printMessage(
-                String.format("%s's container at %d closed", user.getAccount(), aliveNode.getHost()));
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         }

@@ -28,7 +28,7 @@ import org.gcszhn.system.service.obj.DockerNode;
 /**
  * 用于Docker服务的操作，https://www.baeldung.com/docker-java-api
  * @author Zhang.H.N
- * @version 1.0
+ * @version 1.3
  */
 public interface DockerService {
     /**
