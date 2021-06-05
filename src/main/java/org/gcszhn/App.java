@@ -28,7 +28,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 /**
  * App入口
  * @author Zhang.H.N
- * @version 1.0
+ * @version 1.3
  */
 @SpringBootApplication
 @EnableTransactionManagement  //启用事务管理
