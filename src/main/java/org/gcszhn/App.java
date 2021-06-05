@@ -17,9 +17,11 @@ package org.gcszhn;
 
 import javax.annotation.PreDestroy;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.system.ApplicationPidFileWriter;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -32,14 +34,20 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement  //启用事务管理
 @EnableAsync                  //启用异步方法
 public class App {
+    /**配置内容 */
+    @Autowired
+    ConfigurableApplicationContext context;
+    /**main线程入口 */
     public static void main(String[] args) {
-        //SpringApplication.run(App.class, args);
         SpringApplication application = new SpringApplication(App.class);
         application.addListeners(new ApplicationPidFileWriter("app.pid"));
         application.run(args);
     }
+    /**App退出处理，spring在JVM中注册的回调 */
     @PreDestroy
     public void preDestroy() {
+        //关闭tomcat、log4j和其他资源，销毁对象
+        SpringApplication.exit(context);
         System.out.println("Application exited");
     }
 }

@@ -26,7 +26,6 @@ import org.gcszhn.system.service.RedisService;
 import org.gcszhn.system.service.until.AppLog;
 import org.gcszhn.system.watch.UserEvent;
 import org.gcszhn.system.watch.UserListener;
-import org.springframework.scheduling.annotation.Async;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -131,18 +130,20 @@ public class User implements HttpSessionBindingListener, Serializable {
         }
     }
     /**
-     * 用户事件发生时通知监听器
+     * 用户事件发生时异步通知监听器
      * @param ue 用户事件
      */
-    @Async
-    public void notifyUserListener(UserEvent ue) {
-        for (UserListener ul: this.userListeners) {
-            switch (ue.getUserAction()) {
-                case LOGIN:{ul.userLogin(ue);break;}
-                case LOGOUT:{ul.userLogout(ue);break;}
-                case REGISTER:{ul.userRegister(ue);break;}
-                case CANCEL:{ul.userCancel(ue);break;}
+    public void notifyAsyncUserListener(UserEvent ue) {
+        new Thread(()->{
+            for (UserListener ul: this.userListeners) {
+                switch (ue.getUserAction()) {
+                    case LOGIN:{ul.userLogin(ue);break;}
+                    case LOGOUT:{ul.userLogout(ue);break;}
+                    case REGISTER:{ul.userRegister(ue);break;}
+                    case CANCEL:{ul.userCancel(ue);break;}
+                }
             }
-        }
+        }).start();
+        AppLog.printMessage("Async notify user listener successfully");
     }
 }

@@ -161,7 +161,7 @@ public class UserServiceImpl implements UserService {
             }
             userDaoService.addUser(user);
             /** 注册用户，并通知监听器 */
-            user.notifyUserListener(new UserEvent(user, UserAction.REGISTER));
+            user.notifyAsyncUserListener(new UserEvent(user, UserAction.REGISTER));
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         }
@@ -184,7 +184,7 @@ public class UserServiceImpl implements UserService {
             }
             userDaoService.removeUser(user);
             /** 注销账号，并通知监听器 */
-            user.notifyUserListener(new UserEvent(user, UserAction.CANCEL));
+            user.notifyAsyncUserListener(new UserEvent(user, UserAction.CANCEL));
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         }
@@ -235,7 +235,7 @@ public class UserServiceImpl implements UserService {
             } else if (oldSession == null) { // 新建记录
                 onlineUsers.put(user.getAccount(), session);
                 session.setAttribute("user", user);// 会话绑定用户，写入Redis
-                user.notifyUserListener(new UserEvent(user, UserAction.LOGIN));
+                user.notifyAsyncUserListener(new UserEvent(user, UserAction.LOGIN));
             } else { // 无效添加, 销毁新的会话，释放tomcat资源
                 session.invalidate();
             }
@@ -257,7 +257,9 @@ public class UserServiceImpl implements UserService {
                 HttpSession session = onlineUsers.remove(username);
                 User user = (User) session.getAttribute("user");
                 AppLog.printMessage(username + " is removed from online map");
-                user.notifyUserListener(new UserEvent(user, UserAction.LOGOUT));
+
+                //异步通知用户监听器，注销用户
+                user.notifyAsyncUserListener(new UserEvent(user, UserAction.LOGOUT));
                 session.invalidate();
             } else {
                 status = 1;
@@ -306,7 +308,7 @@ public class UserServiceImpl implements UserService {
                 if (list.isEmpty()) userJobs.remove(username);
             }
             
-            //用户不存在任务，通知用户监听器，允许关闭容器
+            //用户不存在任务，通知被阻塞用户在线监听器，允许关闭容器
             if (!hasUserBackgroundJob(username)) {
                 notifyAll(); 
             }
