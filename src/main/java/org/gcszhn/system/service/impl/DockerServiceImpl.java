@@ -229,7 +229,7 @@ public class DockerServiceImpl implements DockerService {
                 .withAttachStderr(true)
                 .withTty(true)
                 .exec().getId();
-
+            AppLog.printMessage("Background job started");
             //过程是异步执行的，故需要await, 当前线程等待子线程完成，即调用onComplete回调
             dockerClient.execStartCmd(exeId).withStdIn(inputStream)
                 .exec(new ResultCallback.Adapter<Frame>() {
@@ -240,9 +240,11 @@ public class DockerServiceImpl implements DockerService {
                             switch(object.getStreamType()) {
                                 case STDERR:{
                                     errStream.write(object.getPayload());
+                                    errStream.flush();
                                     break;
                                 } case STDOUT: {
                                     outputStream.write(object.getPayload());
+                                    outputStream.flush();
                                     break;
                                 }default: break;
                             }
@@ -250,7 +252,18 @@ public class DockerServiceImpl implements DockerService {
                             AppLog.printMessage(null, e, Level.ERROR);
                         }
                     }
+                    @Override
+                    public void onComplete() {
+                        super.onComplete();
+                        try {
+                            errStream.close();
+                            if (outputStream!=errStream) outputStream.close();
+                        } catch (Exception e) {
+                            AppLog.printMessage(null, e, Level.ERROR);
+                        }
+                    }
                 }).awaitCompletion(timeout, unit);
+                AppLog.printMessage("Background job finished or timeout");
                 return 0;
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);

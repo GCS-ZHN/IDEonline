@@ -17,15 +17,17 @@ package org.gcszhn.system.service;
 
 import javax.servlet.http.HttpSession;
 
+import org.gcszhn.system.service.obj.DockerNode;
 import org.gcszhn.system.service.obj.User;
 import org.gcszhn.system.service.obj.UserJob;
 import org.gcszhn.system.service.obj.UserMail;
 import org.gcszhn.system.service.obj.UserNode;
+import org.springframework.scheduling.annotation.Async;
 
 /**
  * 用户处理类，处理与User类相关的操作
  * @author Zhang.H.N
- * @version 1.3
+ * @version 1.4
  */
 public interface UserService {
     /**
@@ -53,11 +55,12 @@ public interface UserService {
      */
     public void cancelAccount(User user);
     /**
-     * 向特定用户发送特定邮件
+     * 向特定用户异步发送特定邮件
      * @param user 用户名
      * @param userMail 用户邮件配置
      */
-    public void sendMail(User user, UserMail userMail);
+    @Async
+    public void sendAsyncMail(User user, UserMail userMail);
     /**
      * 向全体带有邮箱的注册用户发送邮件
      * @param userMail 用户邮件配置
@@ -109,4 +112,12 @@ public interface UserService {
      * @return true表示由后台任务，false表示无后台任务
      */
     public boolean hasUserBackgroundJob(String username);
+    /**
+     * 启动异步任务
+     * @param user 用户
+     * @param dockerNode 用户节点
+     * @param userJob 用户任务
+     */
+    @Async
+    public void startAsyncJob(User user, DockerNode dockerNode, UserJob userJob);
 }

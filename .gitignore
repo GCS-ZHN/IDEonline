@@ -2,6 +2,7 @@
 *.yml
 *.properties
 *.json
+*.jar
 .vscode/
 classes/
 bin/

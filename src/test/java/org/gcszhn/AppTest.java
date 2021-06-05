@@ -15,7 +15,6 @@
  */
 package org.gcszhn;
 
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -26,9 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.github.dockerjava.api.DockerClient;
 
-import org.apache.logging.log4j.Level;
 import org.apache.velocity.VelocityContext;
-import org.gcszhn.server.ResponseResult.StatusResult;
 import org.gcszhn.system.security.RSAEncrypt;
 import org.gcszhn.system.service.DockerService;
 import org.gcszhn.system.service.MailService;
@@ -39,7 +36,9 @@ import org.gcszhn.system.service.VelocityService;
 import org.gcszhn.system.service.impl.DockerServiceImpl;
 import org.gcszhn.system.service.impl.UserServiceImpl;
 import org.gcszhn.system.service.obj.DockerContainerConfig;
+import org.gcszhn.system.service.obj.DockerNode;
 import org.gcszhn.system.service.obj.User;
+import org.gcszhn.system.service.obj.UserJob;
 import org.gcszhn.system.service.obj.UserMail;
 import org.gcszhn.system.service.obj.UserNode;
 import org.gcszhn.system.service.until.AppLog;
@@ -197,7 +196,7 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Test
     public void testMail() {
         User user = ua.createUser("test", "no", "zhang.h.n@foxmail.com");
-        ua.sendMail(user, new UserMail(
+        ua.sendAsyncMail(user, new UserMail(
             "Java Test",
             "mail.vm",
             "text/html;charset=UTF-8",
@@ -308,50 +307,19 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
         client.close();
     }
     @Test
-    public void testBackgroundJob() {
-        String stdinf = "";
-        String stdoutf = "VScodeProject/Java/Own/public/IDEonline-spring/test.log";
-        long timeout = 1;
-        String cmd = "ls";
-        User user = ua.createUser("zhanghn", "password", "address");
-        try (DockerClient dockerClient = dockerService.creatClient(
-            "172.16.10.41", 
-            2375,
-            "1.41"
-            )) {
-             //标准输入，没有则为null
-             FileInputStream stdin = null;
-             if (!stdinf.equals("") && stdinf!=null) stdin = new FileInputStream(
-                 "/public/home/"+user.getAccount()
-                 + (stdinf.startsWith("/")?stdinf:"/"+stdinf)
-             );
-             //标准错误，固定为一个用户目录下一个随机文件
-             FileOutputStream stderr = new FileOutputStream(
-                 "/public/home/"+user.getAccount()+"/background"+ dockerClient.hashCode()+".log");
-             //标准输出，没有指定则合并到标准错误
-             FileOutputStream stdout = null;
-             if (!stdoutf.equals("") && stdoutf!=null) stdout = new FileOutputStream(
-                 "/public/home/"+user.getAccount()
-                 + (stdoutf.startsWith("/")?stdoutf:"/"+stdoutf)
-             );
-             StatusResult jobStatus = new StatusResult();
-             jobStatus.setStatus(1);
-             //userService.addUserBackgroundJob(user.getAccount(), jobStatus);
-
-             dockerService.execBackgroundJobs(
-                 dockerClient,
-                 UserServiceImpl.getTagPrefix()+user.getAccount(), 
-                 timeout, 
-                 TimeUnit.HOURS, 
-                 stdin, 
-                 stdout, 
-                 stderr, 
-                 cmd.split("\\s+")
-                 );
-             jobStatus.setStatus(0);
-             //ua.removeUserBackgroundJob(user.getAccount(), jobStatus);
-        } catch (Exception e) {
-            AppLog.printMessage(null, e, Level.ERROR);
+    public void testBackgroundJob() throws InterruptedException {
+        User user = ua.createUser("zhanghn", "zhanghn", "zhanghn");
+        DockerNode dockerNode = dockerService.getDockerNodeByHost(210);
+        UserJob userJob = new UserJob();
+        userJob.setCmd("/usr/lib/jvm/jdk-14.0.2/bin/java -jar /public/home/zhanghn/VScodeProject/Java/Own/public/IDEonline-spring/IDEonline-1.3.3.jar");
+        userJob.setTimeout(1);
+        userJob.setStdinfile("");
+        System.out.println("Current thread is "+Thread.currentThread().getName());
+        userJob.setStdoutfile("VScodeProject/Java/Own/public/IDEonline-spring/test.log");
+        userJob.setId("test");
+        ua.startAsyncJob(user, dockerNode, userJob);
+        synchronized(userJob) {
+            userJob.wait();
         }
     }
 }

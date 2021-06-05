@@ -22,4 +22,6 @@ public class UserJob {
     String stdinfile;
     /**任务标准输出 */
     String stdoutfile;
+    /**任务超时 */
+    long timeout;
 }

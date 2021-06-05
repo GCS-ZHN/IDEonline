@@ -15,8 +15,11 @@
  */
 package org.gcszhn.system.service.impl;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpSession;
 
@@ -43,7 +46,6 @@ import org.gcszhn.system.watch.UserEvent;
 import org.gcszhn.system.watch.UserOnlineListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import lombok.Getter;
@@ -52,7 +54,7 @@ import lombok.Getter;
  * 用户服务接口扩展类
  * 
  * @author Zhang.H.N
- * @version 1.4
+ * @version 1.5
  */
 @Service
 public class UserServiceImpl implements UserService {
@@ -188,9 +190,8 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    @Async // 异步发送，防止服务阻塞
     @Override
-    public void sendMail(User user, UserMail userMail) {
+    public void sendAsyncMail(User user, UserMail userMail) {
         try {
             mailService.sendMail(user.getAddress(), // 邮件地址
                     userMail.getSubject(), // 邮件主题
@@ -203,13 +204,13 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    @Async
     @Override
     public void sendMailToAll(UserMail userMail) {
         try {
             userDaoService.fetchUserList().forEach((User user) -> {
                 if (user.getAddress() != null) {
-                    sendMail(user, userMail);
+                    //这里是异步发送
+                    sendAsyncMail(user, userMail);
                 }
             });
         } catch (Exception e) {
@@ -257,10 +258,13 @@ public class UserServiceImpl implements UserService {
                 User user = (User) session.getAttribute("user");
                 AppLog.printMessage(username + " is removed from online map");
                 user.notifyUserListener(new UserEvent(user, UserAction.LOGOUT));
+                session.invalidate();
             } else {
                 status = 1;
                 AppLog.printMessage(username + " is not online yet");
             }
+        } catch (IllegalStateException e) {
+            AppLog.printMessage(e.getMessage());
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
             status = -1;
@@ -322,5 +326,62 @@ public class UserServiceImpl implements UserService {
     public boolean hasUserBackgroundJob(String username) {
         HashSet<UserJob> list = userJobs.get(username);
         return list!=null&&!list.isEmpty();
+    }
+    @Override
+    public void startAsyncJob(User user, DockerNode dockerNode, UserJob userJob) {
+        try (DockerClient dockerClient = dockerService.creatClient(
+            UserServiceImpl.getDomain()+"."+dockerNode.getHost(), 
+            dockerNode.getPort(),
+            dockerNode.getApiVersion()
+            )) {
+
+            String cmd = userJob.getCmd();
+            String stdinf = userJob.getStdinfile();
+            String stdoutf = userJob.getStdoutfile();
+            long timeout = userJob.getTimeout();
+            
+            /**资源关闭由dockerService内回调方法完成 */
+             //标准输入
+             FileInputStream stdin = null;
+             if (!stdinf.equals("") && stdinf!=null) stdin = new FileInputStream(
+                 "/public/home/"+user.getAccount()
+                 + (stdinf.startsWith("/")?stdinf:"/"+stdinf)
+             );
+             //标准错误，固定为一个用户目录下一个随机文件
+             String stderrf = "/public/home/"+user.getAccount()+"/"+userJob.getId()+".log";
+             FileOutputStream stderr = new FileOutputStream(stderrf);
+             //标准输出，没有指定则合并到标准错误
+             FileOutputStream stdout = null;
+             if (!stdoutf.equals("") && stdoutf!=null) {
+                 stdout = new FileOutputStream(
+                     "/public/home/"+user.getAccount()
+                     + (stdoutf.startsWith("/")?stdoutf:"/"+stdoutf)
+                 );
+             } else {
+                 stdout = stderr;
+             }
+
+             addUserBackgroundJob(user.getAccount(), userJob);
+             dockerService.execBackgroundJobs(
+                 dockerClient,
+                 UserServiceImpl.getTagPrefix()+user.getAccount(), 
+                 timeout, 
+                 TimeUnit.HOURS, 
+                 stdin, 
+                 stdout, 
+                 stderr, 
+                 cmd.split("\\s+")
+                 );
+             
+             userJob.setStatus(0);
+             removeUserBackgroundJob(user.getAccount(), userJob);
+
+             //通知等待该任务结束的线程
+             synchronized(userJob) {
+                userJob.notifyAll();
+             }
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
+        } 
     }
 }
