@@ -279,10 +279,20 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean isOnlineUser(String username) {
+    public boolean isOnlineUser(User user) {
         try {
+            String username = user.getAccount();
+            boolean flag = onlineUsers.containsKey(username) && onlineUsers.get(username) != null;
+            
+            //在线必须用户名和在线节点都一样，每个用户同时只能在线一个节点
+            if (flag) {
+                HttpSession session = getUserSession(username);
+                User oth = (User) session.getAttribute("user");
+                flag = (
+                    oth != null && oth.getAliveNode().getHost() == user.getAliveNode().getHost());
+            } 
             AppLog.printMessage("Current online count: " + getOnlineUserCount());
-            return onlineUsers.containsKey(username) && onlineUsers.get(username) != null;
+            return flag;
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
             return false;

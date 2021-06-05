@@ -62,8 +62,8 @@ public class UserOnlineListener implements UserListener {
                 //延迟10秒开始关闭，若期间被其他线程获取锁，可以终止关闭容器
                 userService.wait(10000);
 
-                //若获取锁前，已经重新登录，停止退出
-                if (userService.isOnlineUser(user.getAccount())) return;
+                //若获取锁前，已经重新登录相同节点，停止退出容器
+                if (userService.isOnlineUser(user)) return;
 
                 //正式开始关闭服务
                 DockerService dockerService = SpringTools.getBean(DockerService.class);

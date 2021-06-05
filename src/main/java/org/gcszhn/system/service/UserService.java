@@ -92,7 +92,7 @@ public interface UserService {
      * @param username 用户名
      * @return true表示在线，否表示不在线
      */
-    public boolean isOnlineUser(String username);
+    public boolean isOnlineUser(User user);
     /**
      * 添加用户后台任务记录
      * @param username 用户名

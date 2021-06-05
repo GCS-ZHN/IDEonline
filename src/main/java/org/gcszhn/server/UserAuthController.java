@@ -128,6 +128,7 @@ public class UserAuthController {
                     status = 4;
                 }
             } catch (Exception e) {
+                AppLog.printMessage(e.getMessage());
                 status = 4;
             }
         }

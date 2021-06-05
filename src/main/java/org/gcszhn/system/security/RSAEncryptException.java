@@ -15,8 +15,6 @@
  */
 package org.gcszhn.system.security;
 
-import org.apache.logging.log4j.Level;
-import org.gcszhn.system.service.until.AppLog;
 /**
  * RSA加密解密的异常
  * @author Zhang.H.N
@@ -31,7 +29,6 @@ public class RSAEncryptException extends RuntimeException {
      * @param thr 堆栈信息
      */
     public RSAEncryptException(String message, Throwable thr) {
-        AppLog.printMessage(message, Level.ERROR);
-        thr.printStackTrace();
+        super(message, thr);
     }
 }
