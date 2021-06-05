@@ -72,7 +72,7 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Rollback(false)
     @Test
     public void testRegisterAccount() {
-        ua.registerAccount(ua.createUser("test5", "test5", "zhanghn@zju.edu.cn",
+        ua.registerAccount(ua.createUser("dockerTest", "123456", "zhanghn@zju.edu.cn",
             new UserNode(41, true, true, new int[][]{
                 {49077, 8888},
                 {48077, 8067},
@@ -100,7 +100,7 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Rollback(false)
     @Test
     public void testCancelAccount() {
-        ua.cancelAccount(ua.createUser("test5", "test5", null));
+        ua.cancelAccount(ua.createUser("dockerTest", "123456", null));
     }
     /**
      * 本地命令测试

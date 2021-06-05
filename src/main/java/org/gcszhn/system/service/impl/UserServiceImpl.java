@@ -145,7 +145,7 @@ public class UserServiceImpl implements UserService {
                         dockerNode.getApiVersion())) {
                     // Docker容器配置
                     DockerContainerConfig config = new DockerContainerConfig(dockerNode.getImage(),
-                            getTagPrefix() + user.getAccount(), true).withGPUEnable(nc.isEnableGPU()) // GPU是否启用
+                            getTagPrefix() + user.getAccount(), false).withGPUEnable(nc.isEnableGPU()) // GPU是否启用
                                     .withPrivileged(nc.isWithPrivilege()) // 是否有root权限
                                     .withMemoryLimit(24L, DockerContainerConfig.VolumeUnit.GB) // 实际内存及SWAP总限制
                                     .withPortBindings(nc.getPortMap()) // 端口映射
