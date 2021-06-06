@@ -226,9 +226,9 @@ public class DockerServiceImpl implements DockerService {
     }
     @Override
     public int execBackgroundJobs(
-        DockerClient dockerClient, String name, 
-        long timeout, TimeUnit unit, InputStream inputStream,
-        OutputStream outputStream, OutputStream errStream, String... cmd) {
+        DockerClient dockerClient, String name, long timeout, 
+        TimeUnit unit, InputStream inputStream, OutputStream outputStream,
+        OutputStream errStream, Runnable completeCallback, String... cmd) {
         try {
             String exeId = dockerClient.execCreateCmd(name)
                 .withCmd(cmd)
@@ -263,6 +263,7 @@ public class DockerServiceImpl implements DockerService {
                     @Override
                     public void onComplete() {
                         super.onComplete();
+                        if (completeCallback != null) completeCallback.run();
                         try {
                             errStream.close();
                             if (outputStream!=errStream) outputStream.close();

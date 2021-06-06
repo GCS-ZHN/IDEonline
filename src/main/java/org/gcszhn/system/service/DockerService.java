@@ -104,5 +104,6 @@ public interface DockerService {
         InputStream inputStream,
         OutputStream outputStream,
         OutputStream errStream,
+        Runnable completeCallback,
         String... cmd);
 }

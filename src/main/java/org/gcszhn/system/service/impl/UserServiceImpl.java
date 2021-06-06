@@ -15,11 +15,9 @@
  */
 package org.gcszhn.system.service.impl;
 
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpSession;
 
@@ -37,10 +35,10 @@ import org.gcszhn.system.service.VelocityService;
 import org.gcszhn.system.service.obj.DockerContainerConfig;
 import org.gcszhn.system.service.obj.DockerNode;
 import org.gcszhn.system.service.obj.User;
+import org.gcszhn.system.service.obj.User.UserAction;
 import org.gcszhn.system.service.obj.UserJob;
 import org.gcszhn.system.service.obj.UserMail;
 import org.gcszhn.system.service.obj.UserNode;
-import org.gcszhn.system.service.obj.User.UserAction;
 import org.gcszhn.system.service.until.AppLog;
 import org.gcszhn.system.watch.UserEvent;
 import org.gcszhn.system.watch.UserOnlineListener;
@@ -86,7 +84,7 @@ public class UserServiceImpl implements UserService {
     /** 在线用户统计 */
     private HashMap<String, HttpSession> onlineUsers = new HashMap<>();
     /** 用户后台任务统计 */
-    private HashMap<String, HashSet<UserJob>> userJobs = new HashMap<>();
+    private HashMap<String, HashMap<String, UserJob>> userJobs = new HashMap<>();
 
     /** Docker主机IP域 */
     @Getter
@@ -302,12 +300,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public synchronized void addUserBackgroundJob(String username, UserJob userJob) {
         try {
-            HashSet<UserJob> list = userJobs.get(username);
+            HashMap<String, UserJob> list = userJobs.get(username);
             if (list == null)  {
-                list = new HashSet<>(1);
+                list = new HashMap<>(1);
                 userJobs.put(username, list);
             }
-            list.add(userJob);
+            list.put(userJob.getId(), userJob);
             AppLog.printMessage(String.format("job %s for user %s with cmd: '%s' added", userJob.getId(), username, userJob.getCmd()));
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
@@ -317,9 +315,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public synchronized void removeUserBackgroundJob(String username, UserJob userJob) {
         try {
-            HashSet<UserJob> list = userJobs.get(username);
+            HashMap<String, UserJob> list = userJobs.get(username);
             if (list != null) {
-                list.remove(userJob);
+                list.remove(userJob.getId());
                 if (list.isEmpty()) userJobs.remove(username);
             }
             
@@ -332,18 +330,30 @@ public class UserServiceImpl implements UserService {
             AppLog.printMessage(null, e, Level.ERROR);
         }
     }
-
+    @Override
+    public UserJob getUserBackgroundJob(String username, String jobId) {
+        HashMap<String, UserJob> list = userJobs.get(username);
+        if (list != null) {
+            return list.get(jobId);
+        }
+        return null;
+    }
     @Override
     public int getUserBackgroundJobCount(String username) {
-        HashSet<UserJob> list = userJobs.get(username);
+        HashMap<String, UserJob> list = userJobs.get(username);
         return list==null?0:list.size();
     }
 
     @Override
     public boolean hasUserBackgroundJob(String username) {
-        HashSet<UserJob> list = userJobs.get(username);
-        return list!=null&&!list.isEmpty();
+        return getUserBackgroundJobCount(username)!=0;
     }
+    @Override
+    public Collection<UserJob> getUserJobSet(String username) {
+        HashMap<String, UserJob> list = this.userJobs.get(username);
+        return list==null?new HashMap<String, UserJob>().values(): list.values();
+    }
+
     @Override
     public void startAsyncJob(User user, DockerNode dockerNode, UserJob userJob) {
         try (DockerClient dockerClient = dockerService.creatClient(
@@ -352,51 +362,45 @@ public class UserServiceImpl implements UserService {
             dockerNode.getApiVersion()
             )) {
 
-            String cmd = userJob.getCmd();
-            String stdinf = userJob.getStdinfile();
             String stdoutf = userJob.getStdoutfile();
-            long timeout = userJob.getTimeout();
             
-            /**资源关闭由dockerService内回调方法完成 */
-             //标准输入
-             FileInputStream stdin = null;
-             if (!stdinf.equals("") && stdinf!=null) stdin = new FileInputStream(
-                 "/public/home/"+user.getAccount()
-                 + (stdinf.startsWith("/")?stdinf:"/"+stdinf)
-             );
-             //标准错误，固定为一个用户目录下一个随机文件
-             String stderrf = "/public/home/"+user.getAccount()+"/"+userJob.getId()+".log";
-             FileOutputStream stderr = new FileOutputStream(stderrf);
-             //标准输出，没有指定则合并到标准错误
-             FileOutputStream stdout = null;
-             if (!stdoutf.equals("") && stdoutf!=null) {
-                 stdout = new FileOutputStream(
-                     "/public/home/"+user.getAccount()
-                     + (stdoutf.startsWith("/")?stdoutf:"/"+stdoutf)
-                 );
-             } else {
-                 stdout = stderr;
-             }
+            /**标准输出,资源关闭由dockerService内回调方法完成 */
+            FileOutputStream stdout = new FileOutputStream("/public/home/"+
+                (stdoutf!=null && !stdoutf.equals("")?(
+                        user.getAccount()+ (stdoutf.startsWith("/")?stdoutf:"/"+stdoutf)
+                ):(
+                    user.getAccount()+"/"+userJob.getId()+".log")
+                ));
+    
 
-             addUserBackgroundJob(user.getAccount(), userJob);
-             dockerService.execBackgroundJobs(
-                 dockerClient,
-                 UserServiceImpl.getTagPrefix()+user.getAccount(), 
-                 timeout, 
-                 TimeUnit.HOURS, 
-                 stdin, 
-                 stdout, 
-                 stderr, 
-                 cmd.split("\\s+")
-                 );
-             
-             userJob.setStatus(0);
-             removeUserBackgroundJob(user.getAccount(), userJob);
+            addUserBackgroundJob(user.getAccount(), userJob);
+            dockerService.execBackgroundJobs(
+                dockerClient,
+                UserServiceImpl.getTagPrefix()+user.getAccount(), 
+                userJob.getTimeout(), 
+                userJob.getTimeOutUnit(), 
+                userJob.getStdin(), 
+                stdout, 
+                stdout,
+                ()->{try {
+                        userJob.close(false);  //回调关闭任务输入流
+                    } catch (Exception e) {
+                        AppLog.printMessage(null, e, Level.ERROR);
+                }},
+                userJob.getCmd().split("\\s+")
+                );
+            
+            //任务超时而而非主动关闭时
+            userJob.close();
 
-             //通知等待该任务结束的线程
-             synchronized(userJob) {
-                userJob.notifyAll();
-             }
+            //关闭
+            dockerClient.close();
+            removeUserBackgroundJob(user.getAccount(), userJob);
+
+            //通知等待该任务结束的线程
+            synchronized(userJob) {
+            userJob.notifyAll();
+            }
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         } 

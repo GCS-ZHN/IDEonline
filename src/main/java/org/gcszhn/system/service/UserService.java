@@ -15,6 +15,8 @@
  */
 package org.gcszhn.system.service;
 
+import java.util.Collection;
+
 import javax.servlet.http.HttpSession;
 
 import org.gcszhn.system.service.obj.DockerNode;
@@ -106,6 +108,13 @@ public interface UserService {
      */
     public void removeUserBackgroundJob(String username, UserJob userJob);
     /**
+     * 获取用户任务
+     * @param username 用户名
+     * @param jobId 任务id
+     * @return
+     */
+    public UserJob getUserBackgroundJob(String username, String jobId);
+    /**
      * 获取用户后台任务数量
      * @param username 用户名
      * @return 任务数量
@@ -117,6 +126,12 @@ public interface UserService {
      * @return true表示由后台任务，false表示无后台任务
      */
     public boolean hasUserBackgroundJob(String username);
+    /**
+     * 获取用户任务集合
+     * @param username 用户名
+     * @return 用户集合
+     */
+    public Collection<UserJob> getUserJobSet(String username);
     /**
      * 启动异步任务
      * @param user 用户

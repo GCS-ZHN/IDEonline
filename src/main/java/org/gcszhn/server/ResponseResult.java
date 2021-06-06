@@ -23,15 +23,23 @@ import lombok.Data;
  * @version 1.0
  */
 public class ResponseResult {
-    /**返回key的数据结构 */
-    @Data
-    public static class KeyResult {
-        private String key;
-    }
     /**返回状态码的数据结构 */
     @Data
     public static class StatusResult {
         private int status;
+    }
+    /**返回key的数据结构 */
+    @Data
+    public static class KeyResult {
+        private int status;
+        private String key;
+    }
+    /**返回任务状态的数据结构 */
+    @Data
+    public static class JobResult {
+        private int status;
+        private String jobId;
+        private String jobstatus;
     }
     /**该对象不必要实例化 */
     private ResponseResult(){}

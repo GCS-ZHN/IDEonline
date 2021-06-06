@@ -17,6 +17,8 @@ package org.gcszhn;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.net.HttpURLConnection;
 import java.text.DateFormat;
 import java.util.Date;
@@ -25,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.github.dockerjava.api.DockerClient;
 
+import org.apache.logging.log4j.Level;
 import org.apache.velocity.VelocityContext;
 import org.gcszhn.system.security.RSAEncrypt;
 import org.gcszhn.system.service.DockerService;
@@ -282,29 +285,36 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
         client.close();
     }
     @Test
-    public void testDockerExec() throws IOException {
+    public void testDockerExec() throws IOException, InterruptedException {
         DockerClient client = dockerService.creatClient(
             "172.16.10.41", 2375, DockerServiceImpl.getDefaultApiVersion());
-            /*
-        dockerService.execBackgroundJobs(client, 
-        "MULTIPLE1.1-zhanghn",
-        20,
-        TimeUnit.SECONDS, 
-        "/usr/lib/jvm/jdk-14.0.2/bin/java",
-        "-jar",
-        "/public/home/zhanghn/VScodeProject/Java/Own/public/IDEonline-spring/release/IDEonline-1.3.2.jar"
-        );*/
 
-        dockerService.execBackgroundJobs(
-            client, 
-            "MULTIPLE1.1-zhanghn", 
-            10, 
-            TimeUnit.SECONDS,
-            null,
-            new FileOutputStream("output.log"),
-            new FileOutputStream("errr.log"),
-            "ls -hla /public/home/zhanghn".split(" "));
-        client.close();
+        PipedInputStream pipedInputStream = new PipedInputStream();
+        PipedOutputStream pipedOutputStream = new PipedOutputStream();
+        pipedInputStream.connect(pipedOutputStream);
+        new Thread(()->{
+            try {
+                dockerService.execBackgroundJobs(
+                    client, 
+                    "MULTIPLE1.1-zhanghn", 
+                    10, 
+                    TimeUnit.HOURS,
+                    pipedInputStream,
+                    new FileOutputStream("output.log"),
+                    new FileOutputStream("errr.log"),
+                    null,
+                    "/usr/lib/jvm/jdk-14.0.2/bin/java",
+                    "-jar",
+                    "/public/home/zhanghn/VScodeProject/Java/Own/public/IDEonline-spring/dev/IDEonline-1.3.4.jar"
+                );
+                client.close();
+            } catch (Exception e) {
+                AppLog.printMessage(null, e, Level.ERROR);
+            }
+        }).start();
+        Thread.sleep(15000);
+        pipedOutputStream.write(3);
+        Thread.sleep(5000);
     }
     @Test
     public void testBackgroundJob() throws InterruptedException {
@@ -313,7 +323,6 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
         UserJob userJob = new UserJob();
         userJob.setCmd("/usr/lib/jvm/jdk-14.0.2/bin/java -jar /public/home/zhanghn/VScodeProject/Java/Own/public/IDEonline-spring/IDEonline-1.3.3.jar");
         userJob.setTimeout(1);
-        userJob.setStdinfile("");
         System.out.println("Current thread is "+Thread.currentThread().getName());
         userJob.setStdoutfile("VScodeProject/Java/Own/public/IDEonline-spring/test.log");
         userJob.setId("test");

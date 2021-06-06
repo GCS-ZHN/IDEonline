@@ -47,18 +47,16 @@ public class UserOnlineListener implements UserListener {
         try {
             User user = ue.getUser();
             UserService userService = SpringTools.getBean(UserService.class);
-            //等待后台任务完成
-            while (userService.hasUserBackgroundJob(user.getAccount())) {
-                synchronized (userService) {
-                    userService.wait();
-                }
-            }
-
             /**
              * 建立docker服务连接，关闭容器
              * 获取服务的锁，保证正常关闭不受到干扰
              */
             synchronized(userService) {
+                //等待后台任务完成
+                while (userService.hasUserBackgroundJob(user.getAccount())) {
+                    userService.wait();
+                }
+
                 //延迟10秒开始关闭，若期间被其他线程获取锁，可以终止关闭容器
                 userService.wait(10000);
 

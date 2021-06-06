@@ -65,16 +65,22 @@ public class UserAuthController {
     /**获取RSA加密公钥 */
     @GetMapping("/getkey")
     public KeyResult doGetKey() {
-        //登录后再getkey，会注销原先账号
-        request.getSession().invalidate();
-        HttpSession session = request.getSession();
-        //最多闲置10分钟不使用，一旦通过验证立刻失效
-        session.setMaxInactiveInterval(600);
-        String[] keypairs = new String[2];
-        RSAEncrypt.generateKeyPair(keypairs);
-        session.setAttribute("keypair", keypairs);
         KeyResult kj = new KeyResult();
-        kj.setKey(keypairs[1]);
+        try {
+            //登录后再getkey，会注销原先账号
+            request.getSession().invalidate();
+            HttpSession session = request.getSession();
+            //最多闲置10分钟不使用，一旦通过验证立刻失效
+            session.setMaxInactiveInterval(600);
+            String[] keypairs = new String[2];
+            RSAEncrypt.generateKeyPair(keypairs);
+            session.setAttribute("keypair", keypairs);
+            kj.setKey(keypairs[1]);
+            kj.setStatus(0);
+        } catch (Exception e) {
+            AppLog.printMessage(e.getMessage());
+            kj.setStatus(1);
+        }
         return kj;
     }
 
@@ -199,5 +205,24 @@ public class UserAuthController {
             }
         }
         return res;
+    }
+
+    @GetMapping("/userinfo")
+    public User getUserInfo() {
+        User user = new User();
+        try {
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                User sessionUser = (User) session.getAttribute("user");
+                if (sessionUser != null) {
+                    user.setAccount(sessionUser.getAccount());
+                    user.setAliveNode(sessionUser.getAliveNode().getHost());
+                    user.setNodeConfigs(sessionUser.getNodeConfigs());
+                }
+            }
+        } catch (Exception e) {
+            AppLog.printMessage(e.getMessage());
+        }
+        return user;
     }
 }
