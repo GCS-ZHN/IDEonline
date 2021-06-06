@@ -197,7 +197,7 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Autowired
     MailService ms;
     @Test
-    public void testMail() {
+    public void testMail() throws Exception {
         User user = ua.createUser("test", "no", "zhang.h.n@foxmail.com");
         ua.sendAsyncMail(user, new UserMail(
             "Java Test",
@@ -211,10 +211,12 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
                 return context;
             })
         );
+        Thread.sleep(20000);
     }
     /**邮件群发测试 */
     @Test
     public void testMailToAll() {
+        
         User user1 = ua.createUser("test1", "no", "zhang.h.n@foxmail.com");
         User user2 = ua.createUser("test2", "no", "zhanghn@zju.edu.cn");
         User user3 = ua.createUser("test3", "no", "zhang2016@zju.edu.cn");
@@ -236,6 +238,23 @@ public class AppTest extends AbstractTransactionalJUnit4SpringContextTests {
         ua.cancelAccount(user1);
         ua.cancelAccount(user2);
         ua.cancelAccount(user3);
+        
+    }
+    @Test
+    public void sendNotification() throws Exception {
+        ua.sendMailToAll(new UserMail(
+            "Java Test",
+            "mail.vm",
+            "text/html;charset=UTF-8",
+            (User u)->{
+                DateFormat df = DateFormat.getDateInstance(DateFormat.LONG, Locale.CHINA);
+                VelocityContext context = new VelocityContext();
+                context.put("user", u);
+                context.put("date", df.format(new Date()));
+                return context;
+            })
+        );
+        Thread.sleep(20000);
     }
     @Test
     public void testHttpRequest() throws Exception {
