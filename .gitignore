@@ -9,3 +9,4 @@ bin/
 release/
 target/
 *.log
+*.pid
