@@ -22,9 +22,9 @@ import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
 
 import org.apache.logging.log4j.Level;
+import org.gcszhn.system.log.AppLog;
 import org.gcszhn.system.service.RedisService;
 import org.gcszhn.system.service.UserService;
-import org.gcszhn.system.service.until.AppLog;
 import org.gcszhn.system.service.until.SpringTools;
 import org.gcszhn.system.watch.UserEvent;
 import org.gcszhn.system.watch.UserListener;
@@ -118,7 +118,6 @@ public class User implements HttpSessionBindingListener, Serializable {
         try {
             redisService.redisHdel("session", event.getSession().getId());
             UserService userService = SpringTools.getBean(UserService.class);
-
             /**
              * 加锁防止用户登出前，已经重新登录
              */

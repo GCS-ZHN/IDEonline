@@ -15,6 +15,10 @@
  */
 package org.gcszhn.system.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import redis.clients.jedis.Jedis;
 
 /**
@@ -79,4 +83,39 @@ public interface RedisService {
      * @param field 字段
      */
     public void redisHdel(String key, String field);
+    /**
+     * 获取redis哈希表的字段集合
+     * @param key 哈希表的键
+     * @return 键的集合
+     */
+    public Set<String> redisFields(String key);
+    /**
+     * 获取redis哈希表的值集合
+     * @param key 哈希表的键
+     * @return 值的列表
+     */
+    public List<String> redisValues(String key);
+    /**
+     * 获取redis哈希表的全部内容
+     * @param key 指定的哈希表键
+     * @return Map对象
+     */
+    public Map<String, String> redisHgetAll(String key);
+    /**
+     * 删除redis指定键值对
+     * @param keys 键
+     */
+    public void redisDel(String... keys);
+    /**
+     * 添加redis键值对
+     * @param key 键
+     * @param value 值
+     */
+    public void redisSet(String key, String value);
+    /**
+     * 获取指定redis键的值
+     * @param key 键
+     * @return 值
+     */
+    public String redisGet(String key);
 }

@@ -25,13 +25,13 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 
 import org.apache.logging.log4j.Level;
+import org.gcszhn.system.log.AppLog;
 import org.gcszhn.system.security.RandomUtilis;
 import org.gcszhn.system.security.ShaEncrypt;
 import org.gcszhn.system.service.UserDaoService;
 import org.gcszhn.system.service.exception.UDException;
 import org.gcszhn.system.service.obj.User;
 import org.gcszhn.system.service.obj.UserNode;
-import org.gcszhn.system.service.until.AppLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;

@@ -13,7 +13,7 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.server;
+package org.gcszhn.server.http;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -24,8 +24,10 @@ import javax.servlet.http.HttpSession;
 import com.github.dockerjava.api.DockerClient;
 
 import org.apache.logging.log4j.Level;
-import org.gcszhn.server.ResponseResult.KeyResult;
-import org.gcszhn.server.ResponseResult.StatusResult;
+import org.gcszhn.server.tools.ResponseResult.KeyResult;
+import org.gcszhn.server.tools.ResponseResult.StatusResult;
+import org.gcszhn.system.log.AppLog;
+import org.gcszhn.system.log.HttpRequestLog;
 import org.gcszhn.system.security.RSAEncrypt;
 import org.gcszhn.system.service.DockerService;
 import org.gcszhn.system.service.UserDaoService;
@@ -34,7 +36,6 @@ import org.gcszhn.system.service.impl.UserServiceImpl;
 import org.gcszhn.system.service.obj.DockerNode;
 import org.gcszhn.system.service.obj.User;
 import org.gcszhn.system.service.obj.UserNode;
-import org.gcszhn.system.service.until.AppLog;
 import org.gcszhn.system.service.until.HttpRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,7 +45,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 用户登录、登出等操作的控制器
  * @author Zhang.H.N
- * @version 1.0
+ * @version 1.3
  */
 @RestController
 public class UserAuthController {
@@ -65,21 +66,30 @@ public class UserAuthController {
     /**获取RSA加密公钥 */
     @GetMapping("/getkey")
     public KeyResult doGetKey() {
+        HttpRequestLog.log(request);
+        /**
+         * -1 用户已经登录
+         *  0 正常获取key
+         *  1 服务异常
+         */
         KeyResult kj = new KeyResult();
         try {
-            //登录后再getkey，会注销原先账号
-            request.getSession().invalidate();
             HttpSession session = request.getSession();
-            //最多闲置10分钟不使用，一旦通过验证立刻失效
-            session.setMaxInactiveInterval(600);
-            String[] keypairs = new String[2];
-            RSAEncrypt.generateKeyPair(keypairs);
-            session.setAttribute("keypair", keypairs);
-            kj.setKey(keypairs[1]);
-            kj.setStatus(0);
+            if (session.getAttribute("user") == null) {
+                session.setMaxInactiveInterval(500);
+                String[] keypairs = new String[2];
+                RSAEncrypt.generateKeyPair(keypairs);
+                session.setAttribute("keypair", keypairs);
+                kj.setKey(keypairs[1]);
+                kj.setStatus(0);
+            } else {
+                kj.setStatus(-1);
+                kj.setKey("user has logined");
+            }
         } catch (Exception e) {
             AppLog.printMessage(e.getMessage());
             kj.setStatus(1);
+            kj.setKey("server error");
         }
         return kj;
     }
@@ -88,6 +98,7 @@ public class UserAuthController {
     /**验证账号 */
     @PostMapping("/validate")
     public StatusResult doValidate() {
+        HttpRequestLog.log(request);
         HttpSession valSession = request.getSession(false);
         /**
          * 验证状态码
@@ -118,13 +129,15 @@ public class UserAuthController {
                        null);
 
                     status = userDaoService.verifyUser(user);
-                    //密码必须正确才能更新节点属性
+                    //密码必须正确，更新状态，失效验证会话，开始在线会话
                     if (status == 0) {
                         user.setAliveNode(Integer.parseInt(node));
                         if (user.getAliveNode() != null) {
-                            valSession.invalidate(); //必须验证通过才失效，否则二次输入密码必须重新打开页面
+                            valSession.invalidate();
                             HttpSession session = request.getSession();
-                            session.setMaxInactiveInterval(3600*24);//会话有效期为1天
+
+                            //一定时间没有会话范围内的请求，即失效会话，即最大不活跃时间
+                            session.setMaxInactiveInterval(300);
                             userService.addOnlineUser(user, session, true);
                         } else {
                             status = -1;
@@ -145,6 +158,7 @@ public class UserAuthController {
     /**启动经过验证的容器 */
     @GetMapping("/init")
     public StatusResult doInit() {
+        HttpRequestLog.log(request);
         StatusResult res = new StatusResult();
         res.setStatus(1);
         try {
@@ -193,6 +207,7 @@ public class UserAuthController {
     /**用户登出处理 */
     @GetMapping("/logout")
     public StatusResult doLogout() {
+        HttpRequestLog.log(request);
         StatusResult res = new StatusResult();
         res.setStatus(-1);
         HttpSession session = request.getSession(false);
@@ -209,6 +224,7 @@ public class UserAuthController {
 
     @GetMapping("/userinfo")
     public User getUserInfo() {
+        HttpRequestLog.log(request);
         User user = new User();
         try {
             HttpSession session = request.getSession(false);
@@ -224,5 +240,38 @@ public class UserAuthController {
             AppLog.printMessage(e.getMessage());
         }
         return user;
+    }
+
+    @GetMapping("/keepalive")
+    public StatusResult doKeepAlive() {
+        HttpRequestLog.log(request);
+        /**
+         * -1 session not found
+         *  0 ok
+         *  1 user not found
+         *  2 service error
+         */
+        StatusResult res = new StatusResult();
+        try {
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                User user = (User) session.getAttribute("user");
+                if (user != null) {
+                    res.setStatus(0);
+                    res.setInfo("ok");
+                } else {
+                    session.invalidate();
+                    res.setStatus(1);
+                    res.setInfo("user not found");
+                }
+            } else {
+                res.setStatus(-1);
+                res.setInfo("session not found");
+            }
+        } catch (Exception e) {
+            res.setStatus(2);
+            res.setInfo("service error");
+        }
+        return res;
     }
 }

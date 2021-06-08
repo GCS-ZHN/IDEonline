@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 package org.gcszhn.system.service.impl;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.gcszhn.system.service.RedisService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
@@ -82,5 +86,45 @@ public class RedisServiceImpl implements RedisService {
         Jedis jedis = getRedis(DEFAULT_HOST, DEFAULT_PORT, DEFAULT_PASS);
         jedis.hdel(key, field);
         jedis.close();
+    }
+    @Override
+    public Set<String> redisFields(String key) {
+        Jedis jedis = getRedis(DEFAULT_HOST, DEFAULT_PORT, DEFAULT_PASS);
+        Set<String> res = jedis.hkeys(key);
+        jedis.close();
+        return res;
+    }
+    @Override
+    public List<String> redisValues(String key) {
+        Jedis jedis = getRedis(DEFAULT_HOST, DEFAULT_PORT, DEFAULT_PASS);
+        List<String> res = jedis.hvals(key);
+        jedis.close();
+        return res;
+    }
+    @Override
+    public Map<String, String> redisHgetAll(String key) {
+        Jedis jedis = getRedis(DEFAULT_HOST, DEFAULT_PORT, DEFAULT_PASS);
+        Map<String, String> res = jedis.hgetAll(key);
+        jedis.close();
+        return res;
+    }
+    @Override
+    public void redisDel(String... keys) {
+        Jedis jedis = getRedis(DEFAULT_HOST, DEFAULT_PORT, DEFAULT_PASS);
+        jedis.del(keys);
+        jedis.close();
+    }
+    @Override
+    public void redisSet(String key, String value) {
+        Jedis jedis = getRedis(DEFAULT_HOST, DEFAULT_PORT, DEFAULT_PASS);
+        jedis.set(key, value);
+        jedis.close();
+    }
+    @Override
+    public String redisGet(String key) {
+        Jedis jedis = getRedis(DEFAULT_HOST, DEFAULT_PORT, DEFAULT_PASS);
+        String res = jedis.get(key);
+        jedis.close();
+        return res;
     }
 }

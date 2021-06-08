@@ -22,8 +22,8 @@ import org.apache.logging.log4j.Level;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
+import org.gcszhn.system.log.AppLog;
 import org.gcszhn.system.service.VelocityService;
-import org.gcszhn.system.service.until.AppLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

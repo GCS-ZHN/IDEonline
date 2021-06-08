@@ -21,7 +21,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 import org.gcszhn.system.config.JSONConfig;
-import org.gcszhn.system.service.until.AppLog;
+import org.gcszhn.system.log.AppLog;
 import org.gcszhn.system.service.until.ProcessInteraction;
 
 /**

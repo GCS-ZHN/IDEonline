@@ -13,16 +13,26 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn;
+package org.gcszhn.system.log;
 
-import org.junit.runner.RunWith;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
-import org.springframework.test.context.junit4.SpringRunner;
-
+import javax.servlet.http.HttpServletRequest;
 /**
- * App统一的单元测试抽象类
+ * Http请求的统一日志
+ * @author Zhang.H.N
+ * @version 1.0
  */
-@RunWith(SpringRunner.class)
-@SpringBootTest
-public abstract class AppTest extends AbstractTransactionalJUnit4SpringContextTests  {}
+public class HttpRequestLog {
+    /**
+     * 打印日志
+     * @param request
+     */
+    public static void log(HttpServletRequest request) {
+        String message = String.format(
+            "Remote ip: %s, Request URI: %s, Request method: %s", 
+            request.getRemoteAddr(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        AppLog.printMessage(message);
+    }
+}

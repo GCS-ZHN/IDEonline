@@ -25,7 +25,7 @@ import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.api.model.RestartPolicy;
 
 import org.apache.logging.log4j.Level;
-import org.gcszhn.system.service.until.AppLog;
+import org.gcszhn.system.log.AppLog;
 
 import lombok.Getter;
 

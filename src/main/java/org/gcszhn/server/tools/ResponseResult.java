@@ -13,7 +13,7 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.server;
+package org.gcszhn.server.tools;
 
 import lombok.Data;
 
@@ -27,6 +27,7 @@ public class ResponseResult {
     @Data
     public static class StatusResult {
         private int status;
+        private String info;
     }
     /**返回key的数据结构 */
     @Data

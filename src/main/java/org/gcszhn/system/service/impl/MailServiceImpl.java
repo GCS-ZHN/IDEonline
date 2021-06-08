@@ -31,8 +31,8 @@ import javax.mail.internet.MimeMessage;
 
 import org.apache.logging.log4j.Level;
 import org.gcszhn.system.config.JSONConfig;
+import org.gcszhn.system.log.AppLog;
 import org.gcszhn.system.service.MailService;
-import org.gcszhn.system.service.until.AppLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -57,6 +57,8 @@ public class MailServiceImpl implements MailService {
     /**密码 */
     @Value("${mail.auth.password}")
     private String password;
+    @Value("${mail.imap.host}")
+    private String imapHost;
     @Override
     @Autowired
     public void setEnvironment(Environment env) {
@@ -70,11 +72,14 @@ public class MailServiceImpl implements MailService {
             "mail.smtp.port",
             "mail.imap.port",
             "mail.smtp.ssl.enable",
-            "mail.smtp.auth"
+            "mail.smtp.auth",
+            "mail.smtp.starttls.enable",
+            "mail.debug"
         };
         for (String key: keys) {
             props.setProperty(key, env.getProperty(key));
         }
+
         mailSession = Session.getDefaultInstance(props , new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
@@ -90,7 +95,7 @@ public class MailServiceImpl implements MailService {
     @Override
     public void connection() {
         try {
-            store.connect("imap.zju.edu.cn", username, password);
+            store.connect(imapHost, username, password);
         } catch (MessagingException e) {
             e.printStackTrace();
         }
@@ -104,21 +109,22 @@ public class MailServiceImpl implements MailService {
         }
     }
     @Override
-    public void sendMail(String toAddress, String subject, Object content, String contentType) {
+    public synchronized void sendMail(String toAddress, String subject, Object content, String contentType) {
         MimeMessage msg = new MimeMessage(mailSession);
         Folder sent = null;
         try {
             InternetAddress[] toAddrs = InternetAddress.parse(toAddress, false);
             msg.setRecipients(Message.RecipientType.TO, toAddrs);
-            msg.setSubject(subject);
+            msg.setSubject(subject, JSONConfig.DEFAULT_CHARSET.name());
             msg.setFrom(new InternetAddress(username, nickname, JSONConfig.DEFAULT_CHARSET.name()));
             msg.setContent(content, contentType);
-            
+
             Transport.send(msg);
             AppLog.printMessage("Send to " + toAddress +" successfully!");
         } catch (Exception e) {
             AppLog.printMessage("Send to " + toAddress +" failed!", Level.ERROR);
             AppLog.printMessage(e.getMessage(), Level.ERROR);
+            e.printStackTrace();
         } finally {
             if (sent != null && sent.isOpen())
                 try {

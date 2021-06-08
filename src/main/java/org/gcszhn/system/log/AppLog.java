@@ -13,7 +13,7 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service.until;
+package org.gcszhn.system.log;
 
 
 import org.apache.logging.log4j.Level;

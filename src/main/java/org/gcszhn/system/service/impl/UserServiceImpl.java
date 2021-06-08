@@ -26,6 +26,7 @@ import com.github.dockerjava.api.DockerClient;
 import org.apache.logging.log4j.Level;
 import org.gcszhn.system.config.ConfigException;
 import org.gcszhn.system.config.JSONConfig;
+import org.gcszhn.system.log.AppLog;
 import org.gcszhn.system.service.DockerService;
 import org.gcszhn.system.service.MailService;
 import org.gcszhn.system.service.RedisService;
@@ -39,11 +40,11 @@ import org.gcszhn.system.service.obj.User.UserAction;
 import org.gcszhn.system.service.obj.UserJob;
 import org.gcszhn.system.service.obj.UserMail;
 import org.gcszhn.system.service.obj.UserNode;
-import org.gcszhn.system.service.until.AppLog;
 import org.gcszhn.system.watch.UserEvent;
 import org.gcszhn.system.watch.UserOnlineListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
 import lombok.Getter;
@@ -55,6 +56,7 @@ import lombok.Getter;
  * @version 1.5
  */
 @Service
+@DependsOn(value = { "redisServiceImpl" })
 public class UserServiceImpl implements UserService {
     /** DAO服务 */
     @Autowired
@@ -100,6 +102,7 @@ public class UserServiceImpl implements UserService {
             throw new ConfigException("docker.domain");
         }
     }
+
     /** 配置docker容器标签前缀 */
     @Autowired
     public void setTagPrefix(JSONConfig jsonConfig) {
@@ -108,6 +111,37 @@ public class UserServiceImpl implements UserService {
             throw new ConfigException("docker.prefix");
         }
     }
+/* 
+    @SuppressWarnings("unchecked")
+    @PostConstruct
+    public void init() {
+        String val = redisService.redisGet("userjobs");
+        if (val==null) return;
+        try (
+            ByteArrayInputStream bais = new ByteArrayInputStream(
+                val.getBytes(JSONConfig.DEFAULT_CHARSET));
+            ObjectInputStream ois = new ObjectInputStream(bais);
+        ) {
+            userJobs = (HashMap<String, HashMap<String, UserJob>>) ois.readObject();
+            redisService.redisDel("userjobs");
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
+        }
+    }
+
+    @PreDestroy
+    public void destroy()  {
+        try (
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+        ) {
+            oos.writeObject(userJobs);
+            redisService.redisSet("userjobs", baos.toString(JSONConfig.DEFAULT_CHARSET));
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
+        }
+        
+    } */
 
     @Override
     public User createUser(String account, String password, String address, UserNode... nodeConfigs) {
