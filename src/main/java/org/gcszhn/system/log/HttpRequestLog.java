@@ -27,9 +27,12 @@ public class HttpRequestLog {
      * @param request
      */
     public static void log(HttpServletRequest request) {
+        /**Nginx代理时使用这个请求头 */
+        String remoteIP = request.getHeader("X-Real-IP");
+
         String message = String.format(
             "Remote ip: %s, Request URI: %s, Request method: %s", 
-            request.getRemoteAddr(),
+            remoteIP==null?request.getRemoteAddr():remoteIP,
             request.getRequestURI(),
             request.getMethod()
         );

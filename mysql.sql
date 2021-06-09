@@ -39,4 +39,7 @@ UPDATE idrb_platform.account SET owner='测试用户' WHERE username='dockerTest
 # UPDATE idrb_platform.account SET create_stamp=date("1997-12-30")
 # UPDATE idrb_platform.account SET create_stamp=time("12:30:00")
 # UPDATE idrb_platform.account SET create_stamp=str_to_date('2021-04-05 4:30:00', '%Y-%m-%d %h:%i:%s');
-ALTER TABLE idrb_platform.account ADD last_login_stamp TIMESTAMP NOT NULL DEFAULT NOW();
+# ALTER TABLE idrb_platform.account ADD last_login_stamp TIMESTAMP NOT NULL DEFAULT NOW();
+# UPDATE idrb_platform.account SET address='zhanghy@zju.edu.cn' WHERE username='zhanghy';
+# UPDATE idrb_platform.account SET address='caodh@zju.edu.cn' WHERE username='bodao';
+SELECT * FROM idrb_platform.account LIMIT 2

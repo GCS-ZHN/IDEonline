@@ -195,9 +195,10 @@ public class OldTest extends AppTest {
      */
     @Test
     public void testUserMail() throws Exception {
-        User user = userService.createUser("test", "no", "zhang.h.n@foxmail.com");
+        //User user = userService.createUser("wangyx", "no", "wangyx@zju.edu.cn");
+        User user = userService.createUser("zhanghy", "no", "zhanghy@zju.edu.cn");
         userService.sendAsyncMail(user, new UserMail(
-            "Java Test",
+            "IDEonline系统升级的补充通知",
             "mail.vm",
             "text/html;charset=UTF-8",
             (User u)->{
@@ -208,7 +209,7 @@ public class OldTest extends AppTest {
                 return context;
             })
         );
-        Thread.sleep(20000);
+        Thread.sleep(10000);
     }
     
     /**
