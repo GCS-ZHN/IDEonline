@@ -273,7 +273,7 @@ public class UserServiceImpl implements UserService {
                 onlineUsers.put(user.getAccount(), session);
                 AppLog.printMessage(user.getAccount()+ " is added to online map");
                 //解绑旧会话，注意不要直接使用invalidate，否则可能抛出异常
-                oldSession.setMaxInactiveInterval(0);
+                oldSession.setMaxInactiveInterval(1);
             } else if (oldSession == null) { 
                 onlineUsers.put(user.getAccount(), session);
                 session.setAttribute("user", user);

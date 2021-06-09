@@ -16,6 +16,7 @@
 package org.gcszhn.system.log;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 /**
  * Http请求的统一日志
  * @author Zhang.H.N
@@ -29,12 +30,14 @@ public class HttpRequestLog {
     public static void log(HttpServletRequest request) {
         /**Nginx代理时使用这个请求头 */
         String remoteIP = request.getHeader("X-Real-IP");
+        HttpSession session = request.getSession(false);
 
         String message = String.format(
-            "Remote ip: %s, Request URI: %s, Request method: %s", 
+            "Remote ip: %s, Request URI: %s, Request method: %s, Session: %s", 
             remoteIP==null?request.getRemoteAddr():remoteIP,
             request.getRequestURI(),
-            request.getMethod()
+            request.getMethod(),
+            session==null?null:session.getId()
         );
         AppLog.printMessage(message);
     }

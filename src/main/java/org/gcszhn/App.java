@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.system.ApplicationPidFileWriter;
+import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -28,11 +29,12 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 /**
  * App入口
  * @author Zhang.H.N
- * @version 1.3
+ * @version 1.4
  */
 @SpringBootApplication
 @EnableTransactionManagement  //启用事务管理
 @EnableAsync                  //Bean组件启用异步方法
+@ServletComponentScan         //自动扫描@WebServlet、@WebListener等注解，并将对应类型注册为Bean
 public class App {
     /**配置内容 */
     @Autowired
