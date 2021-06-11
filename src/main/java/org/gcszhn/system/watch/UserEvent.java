@@ -17,8 +17,8 @@ package org.gcszhn.system.watch;
 
 import java.util.EventObject;
 
-import org.gcszhn.system.service.obj.User;
-import org.gcszhn.system.service.obj.User.UserAction;
+import org.gcszhn.system.service.user.User;
+import org.gcszhn.system.service.user.User.UserAction;
 
 /**
  * 用户事件处理

@@ -20,11 +20,11 @@ import java.io.FileInputStream;
 import javax.mail.Folder;
 
 import org.gcszhn.system.config.JSONConfig;
-import org.gcszhn.system.service.MailService;
+import org.gcszhn.system.service.mail.MailService;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class mailServiceTest extends AppTest {
+public class MailServiceTest extends AppTest {
     @Autowired
     //@Qualifier("hutoolmail")
     MailService service;

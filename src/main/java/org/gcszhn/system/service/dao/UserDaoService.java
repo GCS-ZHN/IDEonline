@@ -13,11 +13,11 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service;
+package org.gcszhn.system.service.dao;
 
 import java.util.List;
 
-import org.gcszhn.system.service.obj.User;
+import org.gcszhn.system.service.user.User;
 
 /**
  * 用户数据处理的DAO接口

@@ -13,12 +13,12 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service.impl;
+package org.gcszhn.system.service.redis.impl;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.gcszhn.system.service.RedisService;
+import org.gcszhn.system.service.redis.RedisService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 

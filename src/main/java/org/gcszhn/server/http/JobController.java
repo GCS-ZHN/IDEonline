@@ -30,11 +30,11 @@ import org.apache.logging.log4j.Level;
 import org.gcszhn.server.tools.ResponseResult.JobResult;
 import org.gcszhn.system.log.AppLog;
 import org.gcszhn.system.log.HttpRequestLog;
-import org.gcszhn.system.service.DockerService;
-import org.gcszhn.system.service.UserService;
-import org.gcszhn.system.service.obj.DockerNode;
-import org.gcszhn.system.service.obj.User;
-import org.gcszhn.system.service.obj.UserJob;
+import org.gcszhn.system.service.user.UserService;
+import org.gcszhn.system.service.docker.DockerNode;
+import org.gcszhn.system.service.docker.DockerService;
+import org.gcszhn.system.service.user.User;
+import org.gcszhn.system.service.user.UserJob;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -66,6 +66,7 @@ public class JobController {
      * @param args 命令参数
      * @return 提交状态
      */
+    @Deprecated
     @GetMapping("/submit")
     public JobResult doSubmitJob(
         @RequestParam String stdoutf, 
@@ -125,6 +126,7 @@ public class JobController {
      * @param jobid 要求主动终止的任务ID
      * @return 任务状态
      */
+    @Deprecated
     @GetMapping("/terminate")
     public JobResult doTerminateJob(@RequestParam String jobid) {
         HttpRequestLog.log(request);
@@ -167,7 +169,7 @@ public class JobController {
                     userService.getUserJobSet(user.getAccount()).forEach((UserJob userJob)->{
                         JSONObject jsonObject = new JSONObject();
                         jsonObject.put("jobid", userJob.getId());
-                        jsonObject.put("cmd", userJob.getCmd());
+                        jsonObject.put("cmd", userJob.getCmds());
                         jsonObject.put("stdoutf", userJob.getStdoutfile());
                         jsonObject.put("created", sdf.format(userJob.getCreatedTime()));
                         arrayList.add(jsonObject);

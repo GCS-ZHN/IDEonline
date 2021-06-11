@@ -19,13 +19,12 @@ import com.github.dockerjava.api.DockerClient;
 
 import org.apache.logging.log4j.Level;
 import org.gcszhn.system.log.AppLog;
-import org.gcszhn.system.service.DockerService;
-import org.gcszhn.system.service.UserService;
-import org.gcszhn.system.service.impl.UserServiceImpl;
-import org.gcszhn.system.service.obj.DockerNode;
-import org.gcszhn.system.service.obj.User;
-import org.gcszhn.system.service.obj.UserNode;
+import org.gcszhn.system.service.user.UserService;
+import org.gcszhn.system.service.docker.DockerNode;
+import org.gcszhn.system.service.docker.DockerService;
+import org.gcszhn.system.service.user.User;
 import org.gcszhn.system.service.until.SpringTools;
+import org.gcszhn.system.service.user.UserNode;
 
 /**
  * 用户在线情况监听器
@@ -68,10 +67,10 @@ public class UserOnlineListener implements UserListener {
                 UserNode aliveNode = user.getAliveNode();
                 DockerNode dockerNode = dockerService.getDockerNodeByHost(aliveNode.getHost());
                 try (DockerClient dockerClient = dockerService.creatClient(
-                    UserServiceImpl.getDomain()+"."+aliveNode.getHost(), 
+                    dockerService.getDomain()+"."+aliveNode.getHost(), 
                     dockerNode.getPort(), dockerNode.getApiVersion())) {
                         dockerService.stopContainer(dockerClient, 
-                            UserServiceImpl.getTagPrefix()+user.getAccount());
+                            dockerService.getContainerNamePrefix()+user.getAccount());
                 }
                 AppLog.printMessage(
                     String.format("%s's container at %d closed", 

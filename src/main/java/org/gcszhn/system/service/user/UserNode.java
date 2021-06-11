@@ -13,14 +13,15 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service.obj;
+package org.gcszhn.system.service.user;
 
 import java.io.Serializable;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
-import org.gcszhn.system.service.DockerService;
+import org.gcszhn.system.service.docker.DockerNode;
+import org.gcszhn.system.service.docker.DockerService;
 import org.gcszhn.system.service.until.SpringTools;
 
 import lombok.Getter;

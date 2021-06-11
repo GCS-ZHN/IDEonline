@@ -48,7 +48,7 @@ public class JSONConfig {
             String jsonString = new String(is.readAllBytes(), DEFAULT_CHARSET);
             is.close();
             JSONObject jsonObject = JSON.parseObject(jsonString);
-            dockerConfig = jsonObject.getJSONObject("docker");
+            dockerConfig = jsonObject.getJSONObject("dockerCluster");
             managerConfig = jsonObject.getJSONObject("manager");
             if (dockerConfig == null||managerConfig == null) {
                 throw new ConfigException("docker|manager|redis");

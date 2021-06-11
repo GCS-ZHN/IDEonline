@@ -13,7 +13,7 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service;
+package org.gcszhn.system.service.docker;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -21,14 +21,12 @@ import java.util.concurrent.TimeUnit;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
-
-import org.gcszhn.system.service.obj.DockerContainerConfig;
-import org.gcszhn.system.service.obj.DockerNode;
+import com.github.dockerjava.api.command.InspectExecResponse;
 
 /**
  * 用于Docker服务的操作，https://www.baeldung.com/docker-java-api
  * @author Zhang.H.N
- * @version 1.3
+ * @version 1.5
  */
 public interface DockerService {
     /**
@@ -85,18 +83,9 @@ public interface DockerService {
      * @return true代表在运行，false代表不运行
      */
     public boolean getContainerStatus(DockerClient dockerClient, String name);
-    /**
-     * 向Docker容器发起命令执行请求
-     * @param dockerClient docker客户端对象
-     * @param name docker容器ID或名称
-     * @param timeout 超时时间，超过会结束当前线程，但后台线程任然运行
-     * @param unit 超时时间单位
-     * @param inputStream 标准输入流
-     * @param outputStream 标准输出流
-     * @param cmd 后台命令
-     * @return 命令启动状态码
-     */
-    public int execBackgroundJobs(
+
+    @Deprecated
+    public String execBackgroundJob(
         DockerClient dockerClient, 
         String name, 
         long timeout, 
@@ -106,4 +95,59 @@ public interface DockerService {
         OutputStream errStream,
         Runnable completeCallback,
         String... cmd);
+    /**
+     * 创建docker后台任务，但并未启动，返回execId
+     * @param dockerClient docker客户端
+     * @param name docker容器ID或名称
+     * @param config 任务配置
+     * @param cmd 任务命令
+     * @return execId
+     */
+    public String createBackgroundJob(
+        DockerClient dockerClient, 
+        String name, 
+        DockerExecConfig config,
+        String... cmd);
+    /**
+     * 启动创建的docker后台任务
+     * @param dockerClient docker客户端对象
+     * @param name docker容器ID或名称
+     * @param execId 后台任务ID
+     * @param config 任务配置
+     * @param completeCallback 任务完成的回调
+     */
+    public void startBackgroundJob(
+        DockerClient dockerClient, 
+        String name,
+        String execId,
+        DockerExecConfig config,
+        Runnable completeCallback);
+
+    /**
+     * 终止运行中的后台任务
+     * @param dockerNode docker节点
+     * @param execId 执行任务ID
+     */
+    public void stopBackgroundJob(DockerNode dockerNode, String execId);
+    /**
+     * 获取Docker exec进程的运行状态
+     * @param dockerClient docker客户端
+     * @param execId docker的execId
+     * @return 状态对象
+     */
+    public InspectExecResponse getBackgroundStatus(DockerClient dockerClient, String execId);
+    /**获取docker服务器集群root密码
+     * @return root密码
+     */
+    public String getRootAuth();
+    /**
+     * 获取docker服务器集群IP域
+     * @return IP域
+     */
+    public String getDomain();
+    /**
+     * 获取docker容器统一的名称前缀
+     * @return 名称前缀
+     */
+    public String getContainerNamePrefix();
 }

@@ -15,39 +15,26 @@
  */
 package org.gcszhn;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.net.HttpURLConnection;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
-import com.github.dockerjava.api.DockerClient;
-
-import org.apache.logging.log4j.Level;
 import org.apache.velocity.VelocityContext;
 import org.gcszhn.system.log.AppLog;
 import org.gcszhn.system.security.RSAEncrypt;
-import org.gcszhn.system.service.DockerService;
-import org.gcszhn.system.service.MailService;
-import org.gcszhn.system.service.RedisService;
-import org.gcszhn.system.service.UserDaoService;
-import org.gcszhn.system.service.UserService;
-import org.gcszhn.system.service.VelocityService;
-import org.gcszhn.system.service.impl.DockerServiceImpl;
-import org.gcszhn.system.service.impl.UserServiceImpl;
-import org.gcszhn.system.service.obj.DockerContainerConfig;
-import org.gcszhn.system.service.obj.DockerNode;
-import org.gcszhn.system.service.obj.User;
-import org.gcszhn.system.service.obj.UserJob;
-import org.gcszhn.system.service.obj.UserMail;
-import org.gcszhn.system.service.obj.UserNode;
+import org.gcszhn.system.service.redis.RedisService;
+import org.gcszhn.system.service.user.UserService;
+import org.gcszhn.system.service.velocity.VelocityService;
+import org.gcszhn.system.service.dao.UserDaoService;
+import org.gcszhn.system.service.mail.MailService;
+import org.gcszhn.system.service.user.User;
+import org.gcszhn.system.service.user.UserMail;
 import org.gcszhn.system.service.until.HttpRequest;
 import org.gcszhn.system.service.until.ProcessInteraction;
+import org.gcszhn.system.service.user.UserNode;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.Rollback;
@@ -64,8 +51,6 @@ public class OldTest extends AppTest {
     UserService userService;
     @Autowired
     UserDaoService userDaoService;
-    @Autowired
-    DockerService dockerService;
     /**
      * 账号注册测试
      */
@@ -196,9 +181,9 @@ public class OldTest extends AppTest {
     @Test
     public void testUserMail() throws Exception {
         //User user = userService.createUser("wangyx", "no", "wangyx@zju.edu.cn");
-        User user = userService.createUser("zhanghy", "no", "zhanghy@zju.edu.cn");
+        User user = userService.createUser("dockerTest", "no", "zhanghn@zju.edu.cn");
         userService.sendAsyncMail(user, new UserMail(
-            "IDEonline系统升级的补充通知",
+            "IDEonline更新维护的通知",
             "mail.vm",
             "text/html;charset=UTF-8",
             (User u)->{
@@ -222,7 +207,7 @@ public class OldTest extends AppTest {
         
         //User user1 = ua.createUser("test1", "no", "zhang.h.n@foxmail.com");
       //  User user2 = ua.createUser("test2", "no", "zhanghn@zju.edu.cn");
-        User user3 = userService.createUser("test3", "no", "zhang2016@zju.edu.cn");
+        User user3 = userService.createUser("test", "no", "zhang2016@zju.edu.cn");
       //  ua.registerAccount(user1);
       //  ua.registerAccount(user2);
         userService.registerAccount(user3);
@@ -247,7 +232,7 @@ public class OldTest extends AppTest {
     @Test
     public void sendNotification() throws Exception {
         userService.sendMailToAll(new UserMail(
-            "IDEonline系统升级的补充通知",
+            "IDEonline更新维护的通知",
             "mail.vm",
             "text/html;charset=UTF-8",
             (User u)->{
@@ -277,82 +262,7 @@ public class OldTest extends AppTest {
                     e.printStackTrace();
                 }
             }
-        }, ("docker -H "+ UserServiceImpl.getDomain()+ ".41 start MULTIPLE1.1-lumk").split(" "));
-    }
-    @Test
-    public void testDockerContainer() throws IOException {
-        DockerClient client = dockerService.creatClient(
-            "172.16.10.41", 2375, DockerServiceImpl.getDefaultApiVersion());
-            
-        DockerContainerConfig config = new DockerContainerConfig(
-            "zhanghn/multiple:v1.1", "MULTIPLE1.1-test", true)
-            .withCmdArgs("test")
-            .withAutoStart(true)
-            .withPrivileged(true)
-            .withGPUEnable(true)
-            .withGPULimit(new int[]{1,2,3})
-            .withMemoryLimit(24L, DockerContainerConfig.VolumeUnit.PB)
-            .withPortBindings(new int[][]{
-                {43002, 8888},
-                {43001, 8067},
-                {43000, 8080}
-            })
-            .withVolumeBindings(
-                "/public/home/test:/public/home/test",
-                "/public/packages:/public/packages"
-            );
-        //System.out.println(dockerService.getDockerNodeByHost(41).getImage());;
-        dockerService.createContainer(client,config);
-        System.out.println(dockerService.getContainerStatus(client, "MULTIPLE1.1-test"));
-        dockerService.deleteContainer(client, "MULTIPLE1.1-test");
-        client.close();
-    }
-    @Test
-    public void testDockerExec() throws IOException, InterruptedException {
-        DockerClient client = dockerService.creatClient(
-            "172.16.10.41", 2375, DockerServiceImpl.getDefaultApiVersion());
-
-        PipedInputStream pipedInputStream = new PipedInputStream();
-        PipedOutputStream pipedOutputStream = new PipedOutputStream();
-        pipedInputStream.connect(pipedOutputStream);
-        new Thread(()->{
-            try {
-                dockerService.execBackgroundJobs(
-                    client, 
-                    "MULTIPLE1.1-zhanghn", 
-                    10, 
-                    TimeUnit.HOURS,
-                    pipedInputStream,
-                    new FileOutputStream("output.log"),
-                    new FileOutputStream("errr.log"),
-                    null,
-                    "/usr/lib/jvm/jdk-14.0.2/bin/java",
-                    "-jar",
-                    "/public/home/zhanghn/VScodeProject/Java/Own/public/IDEonline-spring/dev/IDEonline-1.3.4.jar"
-                );
-                client.close();
-            } catch (Exception e) {
-                AppLog.printMessage(null, e, Level.ERROR);
-            }
-        }).start();
-        Thread.sleep(15000);
-        pipedOutputStream.write(3);
-        Thread.sleep(5000);
-    }
-    @Test
-    public void testBackgroundJob() throws InterruptedException {
-        User user = userService.createUser("zhanghn", "zhanghn", "zhanghn");
-        DockerNode dockerNode = dockerService.getDockerNodeByHost(210);
-        UserJob userJob = new UserJob();
-        userJob.setCmd("/usr/lib/jvm/jdk-14.0.2/bin/java -jar /public/home/zhanghn/VScodeProject/Java/Own/public/IDEonline-spring/IDEonline-1.3.3.jar");
-        userJob.setTimeout(1);
-        System.out.println("Current thread is "+Thread.currentThread().getName());
-        userJob.setStdoutfile("VScodeProject/Java/Own/public/IDEonline-spring/test.log");
-        userJob.setId("test");
-        userService.startAsyncJob(user, dockerNode, userJob);
-        synchronized(userJob) {
-            userJob.wait();
-        }
+        }, ("docker -H 172.16.10.41 start MULTIPLE1.1-lumk").split(" "));
     }
 }
 

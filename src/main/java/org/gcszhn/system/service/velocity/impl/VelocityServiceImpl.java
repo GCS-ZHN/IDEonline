@@ -13,7 +13,7 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service.impl;
+package org.gcszhn.system.service.velocity.impl;
 
 import java.io.StringWriter;
 import java.util.Map;
@@ -23,7 +23,7 @@ import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.gcszhn.system.log.AppLog;
-import org.gcszhn.system.service.VelocityService;
+import org.gcszhn.system.service.velocity.VelocityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

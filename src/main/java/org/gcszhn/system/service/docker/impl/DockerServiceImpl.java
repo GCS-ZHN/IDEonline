@@ -13,8 +13,9 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service.impl;
+package org.gcszhn.system.service.docker.impl;
 
+import java.io.Closeable;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.model.DeviceRequest;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
@@ -41,9 +43,11 @@ import com.github.dockerjava.transport.DockerHttpClient;
 import org.apache.logging.log4j.Level;
 import org.gcszhn.system.config.JSONConfig;
 import org.gcszhn.system.log.AppLog;
-import org.gcszhn.system.service.DockerService;
-import org.gcszhn.system.service.obj.DockerContainerConfig;
-import org.gcszhn.system.service.obj.DockerNode;
+import org.gcszhn.system.service.docker.DockerContainerConfig;
+import org.gcszhn.system.service.docker.DockerExecConfig;
+import org.gcszhn.system.service.docker.DockerNode;
+import org.gcszhn.system.service.docker.DockerService;
+import org.gcszhn.system.service.until.ProcessInteraction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -52,13 +56,18 @@ import lombok.Getter;
 /**
  * Docker服务的接口实现
  * @author Zhang.H.N
- * @version 1.3
+ * @version 1.5
  */
 @Service
 public class DockerServiceImpl implements DockerService {
     /**默认的Docker API版本 */
-    @Getter
-    private static String defaultApiVersion = "1.41";
+    private @Getter static String defaultApiVersion = "1.41";
+    /**docker服务器集群root密码 */
+    private @Getter String rootAuth;
+    /**docker服务器集群IP域 */
+    private @Getter String domain;
+    /**docker容器统一名称前缀 */
+    private @Getter String containerNamePrefix;
     /**可用Docker服务节点 */
     private Map<Integer, DockerNode> dockerNodes;
     /**
@@ -66,8 +75,11 @@ public class DockerServiceImpl implements DockerService {
      * @param config App的JSON配置对象
      */
     @Autowired
-    public void setDockerNodes(JSONConfig config) {
+    public void setDockerConfig(JSONConfig config) {
         try {
+            rootAuth = config.getDockerConfig().getString("rootAuth");
+            domain = config.getDockerConfig().getString("domain");
+            containerNamePrefix = config.getDockerConfig().getString("prefix");
             JSONArray nodes = config.getDockerConfig().getJSONArray("nodes");
             dockerNodes = new HashMap<>(nodes.size());
             for (int i=0; i< nodes.size(); i++) {
@@ -108,7 +120,9 @@ public class DockerServiceImpl implements DockerService {
                 .dockerHost(config.getDockerHost())
                 .maxConnections(50)
                 .build();
-            DockerClient client = DockerClientBuilder.getInstance(config).withDockerHttpClient(dockerHttpClient).build();
+                
+            DockerClient client = DockerClientBuilder.getInstance(config)
+                .withDockerHttpClient(dockerHttpClient).build();
 
         return client;
     }
@@ -225,12 +239,12 @@ public class DockerServiceImpl implements DockerService {
         }
     }
     @Override
-    public int execBackgroundJobs(
+    public String execBackgroundJob(
         DockerClient dockerClient, String name, long timeout, 
         TimeUnit unit, InputStream inputStream, OutputStream outputStream,
         OutputStream errStream, Runnable completeCallback, String... cmd) {
         try {
-            String exeId = dockerClient.execCreateCmd(name)
+            String execId = dockerClient.execCreateCmd(name)
                 .withCmd(cmd)
                 .withAttachStdin(true)
                 .withAttachStdout(true)
@@ -239,7 +253,7 @@ public class DockerServiceImpl implements DockerService {
                 .exec().getId();
             AppLog.printMessage("Background job started");
             //过程是异步执行的，故需要await, 当前线程等待子线程完成，即调用onComplete回调
-            dockerClient.execStartCmd(exeId).withStdIn(inputStream)
+            dockerClient.execStartCmd(execId).withStdIn(inputStream)
                 .exec(new ResultCallback.Adapter<Frame>() {
                     //重写onNext回调，输出信息
                     @Override
@@ -272,11 +286,105 @@ public class DockerServiceImpl implements DockerService {
                         }
                     }
                 }).awaitCompletion(timeout, unit);
-                AppLog.printMessage("Background job finished or timeout");
-                return 0;
+                
+            
+            AppLog.printMessage("Background job finished or timeout");
+            return execId;
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
-            return 1;
+            return null;
         }
+    }
+    @Override
+    public String createBackgroundJob(DockerClient dockerClient, String name, DockerExecConfig config, String... cmd) {
+        String execId = dockerClient.execCreateCmd(name)
+            .withCmd(cmd)
+            .withAttachStdin(true)
+            .withAttachStdout(true)
+            .withAttachStderr(true)
+            .withTty(config.isTty())
+            .withEnv(config.getEnvs())
+            .withUser(config.getUsername())
+            .withWorkingDir(config.getWorkingDir())
+            .exec().getId();
+        AppLog.printMessage("Background job created");
+        return execId;
+    }
+    @Override
+    public void startBackgroundJob(DockerClient dockerClient, String name, String execId,
+        DockerExecConfig config, Runnable completeCallback) {
+        try {
+            OutputStream outputStream = config.getOutputStream();
+            
+            dockerClient.execStartCmd(execId).withStdIn(config.getInputStream())
+                .exec(new ResultCallback.Adapter<Frame>() {
+                    @Override
+                    public void onStart(Closeable stream) {
+                        super.onStart(stream);
+                        AppLog.printMessage("Background job start");
+                    }
+                    //重写onNext回调，输出信息
+                    @Override
+                    public void onNext(Frame object) {
+                        try {
+                            if (outputStream != null) {
+                                outputStream.write(object.getPayload());
+                                outputStream.flush();
+                            }
+                        } catch (Exception e) {
+                            AppLog.printMessage(null, e, Level.ERROR);
+                        }
+                    }
+                    @Override
+                    public void onComplete() {
+                        super.onComplete();
+                        AppLog.printMessage("Background job finished or timeout");
+                        if (completeCallback != null) completeCallback.run();
+                        try {
+                            if (outputStream!=null) outputStream.close();
+                        } catch (Exception e) {
+                            AppLog.printMessage(null, e, Level.ERROR);
+                        }
+                    }
+                    @Override
+                    public void onError(Throwable throwable) {
+                        super.onError(throwable);
+                        AppLog.printMessage("Background job error occurred");
+                        AppLog.printMessage(null, throwable, Level.ERROR);
+                    }
+                });
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
+        }
+    }
+    @Override
+    public void stopBackgroundJob(DockerNode dockerNode, String execId) {
+        String ip = getDomain()+"."+dockerNode.getHost();
+        try(
+            DockerClient dockerClient = creatClient(
+            ip, 
+            dockerNode.getPort(),
+            dockerNode.getApiVersion())
+        ) {
+            InspectExecResponse response = getBackgroundStatus(dockerClient, execId);
+            if (response.isRunning()) {
+                Long pid = response.getPidLong();
+                if (pid > 0) {
+                    ProcessInteraction.remoteExec(ip, rootAuth, true, 
+                    (Process p)->{
+                        AppLog.printMessage("Job "+execId+" with PID "+pid+" killed");
+                    },
+                    (Process p)->{
+                        AppLog.printMessage("Job "+execId+" with PID "+pid+" killed failed");
+                    }, "kill -9 " + pid);
+                }
+            }
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
+        }
+    }
+    @Override
+    public InspectExecResponse getBackgroundStatus(DockerClient dockerClient, String execId) {
+        return dockerClient.inspectExecCmd(execId).exec();
     }
 }

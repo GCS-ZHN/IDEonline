@@ -13,33 +13,34 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service.impl;
+package org.gcszhn.system.service.user.impl;
 
 import java.io.FileOutputStream;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.servlet.http.HttpSession;
 
 import com.github.dockerjava.api.DockerClient;
 
 import org.apache.logging.log4j.Level;
-import org.gcszhn.system.config.ConfigException;
-import org.gcszhn.system.config.JSONConfig;
 import org.gcszhn.system.log.AppLog;
-import org.gcszhn.system.service.DockerService;
-import org.gcszhn.system.service.MailService;
-import org.gcszhn.system.service.RedisService;
-import org.gcszhn.system.service.UserDaoService;
-import org.gcszhn.system.service.UserService;
-import org.gcszhn.system.service.VelocityService;
-import org.gcszhn.system.service.obj.DockerContainerConfig;
-import org.gcszhn.system.service.obj.DockerNode;
-import org.gcszhn.system.service.obj.User;
-import org.gcszhn.system.service.obj.User.UserAction;
-import org.gcszhn.system.service.obj.UserJob;
-import org.gcszhn.system.service.obj.UserMail;
-import org.gcszhn.system.service.obj.UserNode;
+import org.gcszhn.system.service.redis.RedisService;
+import org.gcszhn.system.service.user.UserService;
+import org.gcszhn.system.service.dao.UserDaoService;
+import org.gcszhn.system.service.docker.DockerContainerConfig;
+import org.gcszhn.system.service.docker.DockerExecConfig;
+import org.gcszhn.system.service.docker.DockerNode;
+import org.gcszhn.system.service.docker.DockerService;
+import org.gcszhn.system.service.mail.MailService;
+import org.gcszhn.system.service.user.User;
+import org.gcszhn.system.service.user.User.UserAction;
+import org.gcszhn.system.service.velocity.VelocityService;
+import org.gcszhn.system.service.user.UserJob;
+import org.gcszhn.system.service.user.UserNode;
+import org.gcszhn.system.service.user.UserMail;
 import org.gcszhn.system.watch.UserEvent;
 import org.gcszhn.system.watch.UserOnlineListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,43 +75,23 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private RedisService redisService;
 
-    /** Nginx配置模板 */
-    @Value("${nginx.temp}")
-    private String nginxTemp;
-    /** Nginx配置目录 */
-    @Value("${nginx.confdir}")
-    private String nginxConfDir;
-    /** Nginx主机 */
-    @Value("${nginx.host}")
-    private String nginxHost;
     /** 在线用户统计 */
     private HashMap<String, HttpSession> onlineUsers = new HashMap<>();
     /** 用户后台任务统计 */
     private HashMap<String, HashMap<String, UserJob>> userJobs = new HashMap<>();
-
-    /** Docker主机IP域 */
-    @Getter
-    private static String domain;
-    /** Docker容器标签前缀 */
-    @Getter
-    private static String tagPrefix;
-
-    @Autowired
-    public void setDomain(JSONConfig jsonConfig) {
-        UserServiceImpl.domain = jsonConfig.getDockerConfig().getString("domain");
-        if (domain == null) {
-            throw new ConfigException("docker.domain");
-        }
+    /** 用户目录的基础目录，即用户目录的父目录 */
+    private @Getter String userBaseDir;
+    @Value("${user.basedir}")
+    public void setUserBaseDir(String userBaseDir) {
+        this.userBaseDir = userBaseDir.endsWith("/")?userBaseDir:userBaseDir+"/";
+    }
+    /** 所有用户的共享目录 */
+    private @Getter String[] shareDirs;
+    @Value("${user.sharedirs}")
+    public void setShareDirs(String shareDirs) {
+        this.shareDirs = shareDirs.split(";\\s+");
     }
 
-    /** 配置docker容器标签前缀 */
-    @Autowired
-    public void setTagPrefix(JSONConfig jsonConfig) {
-        UserServiceImpl.tagPrefix = jsonConfig.getDockerConfig().getString("prefix");
-        if (tagPrefix == null) {
-            throw new ConfigException("docker.prefix");
-        }
-    }
 /* 
     @SuppressWarnings("unchecked")
     @PostConstruct
@@ -171,20 +152,25 @@ public class UserServiceImpl implements UserService {
         }
         try {
             for (UserNode nc : user.getNodeConfigs()) {
-                String ip = getDomain() + "." + nc.getHost();
+                String ip = dockerService.getDomain() + "." + nc.getHost();
                 DockerNode dockerNode = dockerService.getDockerNodeByHost(nc.getHost());
                 try (DockerClient dockerClient = dockerService.creatClient(ip, dockerNode.getPort(),
                         dockerNode.getApiVersion())) {
                     // Docker容器配置
-                    DockerContainerConfig config = new DockerContainerConfig(dockerNode.getImage(),
-                            getTagPrefix() + user.getAccount(), false).withGPUEnable(nc.isEnableGPU()) // GPU是否启用
-                                    .withPrivileged(nc.isWithPrivilege()) // 是否有root权限
-                                    .withMemoryLimit(24L, DockerContainerConfig.VolumeUnit.GB) // 实际内存及SWAP总限制
-                                    .withPortBindings(nc.getPortMap()) // 端口映射
-                                    .withVolumeBindings( // 硬盘卷映射
-                                            "/public/home/" + user.getAccount() + ":/public/home/" + user.getAccount(),
-                                            "/public/packages:/public/packages")
-                                    .withCmdArgs(user.getAccount()); // CMD指令参数
+                    String[] dirMap = new String[shareDirs.length + 1];
+                    dirMap[0] = getUserBaseDir() + user.getAccount();
+                    for (int i=0; i < shareDirs.length; i++) {
+                        dirMap[i+1] = shareDirs[i];
+                    }
+                    DockerContainerConfig config = new DockerContainerConfig(
+                        dockerNode.getImage(),
+                        dockerService.getContainerNamePrefix() + user.getAccount(), false)
+                                    .withGPUEnable(nc.isEnableGPU())                            // GPU是否启用
+                                    .withPrivileged(nc.isWithPrivilege())                       // 是否有root权限
+                                    .withMemoryLimit(24L, DockerContainerConfig.VolumeUnit.GB)  // 实际内存及SWAP总限制
+                                    .withPortBindings(nc.getPortMap())                          // 端口映射
+                                    .withVolumeBindings(dirMap)                                 // 硬盘卷映射
+                                    .withCmdArgs(user.getAccount());                            // CMD指令参数
 
                     dockerService.createContainer(dockerClient, config);
                 } catch (Exception e) {
@@ -205,11 +191,12 @@ public class UserServiceImpl implements UserService {
             return;
         try {
             for (UserNode nc : user.getNodeConfigs()) {
-                String ip = getDomain() + "." + nc.getHost();
+                String ip = dockerService.getDomain() + "." + nc.getHost();
                 DockerNode dockerNode = dockerService.getDockerNodeByHost(nc.getHost());
                 try (DockerClient dockerClient = dockerService.creatClient(ip, dockerNode.getPort(),
                         dockerNode.getApiVersion())) {
-                    dockerService.deleteContainer(dockerClient, getTagPrefix() + user.getAccount());
+                    dockerService.deleteContainer(dockerClient, 
+                    dockerService.getContainerNamePrefix() + user.getAccount());
                 } catch (Exception e) {
                     AppLog.printMessage(null, e, Level.ERROR);
                 }
@@ -259,7 +246,15 @@ public class UserServiceImpl implements UserService {
     public int getOnlineUserCount() {
         return onlineUsers.size();
     }
-
+    @Override
+    public Set<User> getOnlineUserSet() {
+        Set<User> userSet = new HashSet<>(this.onlineUsers.size());
+        this.onlineUsers.values().forEach((HttpSession session)->{
+            User user = (User) session.getAttribute("user");
+            if (user != null) userSet.add(user);
+        });
+        return userSet;
+    }
     @Override
     public synchronized void addOnlineUser(User user, HttpSession session, boolean overwrite) {
         try {
@@ -308,6 +303,11 @@ public class UserServiceImpl implements UserService {
             status = -1;
         }
         return status;
+    }
+
+    @Override
+    public HashMap<String, HashMap<String, UserJob>> getUserJobList() {
+        return this.userJobs;
     }
 
     @Override
@@ -388,10 +388,11 @@ public class UserServiceImpl implements UserService {
         return list==null?new HashMap<String, UserJob>().values(): list.values();
     }
 
+    @Deprecated
     @Override
     public void startAsyncJob(User user, DockerNode dockerNode, UserJob userJob) {
         try (DockerClient dockerClient = dockerService.creatClient(
-            UserServiceImpl.getDomain()+"."+dockerNode.getHost(), 
+            dockerService.getDomain()+"."+dockerNode.getHost(), 
             dockerNode.getPort(),
             dockerNode.getApiVersion()
             )) {
@@ -399,7 +400,7 @@ public class UserServiceImpl implements UserService {
             String stdoutf = userJob.getStdoutfile();
             
             /**标准输出,资源关闭由dockerService内回调方法完成 */
-            FileOutputStream stdout = new FileOutputStream("/public/home/"+
+            FileOutputStream stdout = new FileOutputStream(getUserBaseDir()+
                 (stdoutf!=null && !stdoutf.equals("")?(
                         user.getAccount()+ (stdoutf.startsWith("/")?stdoutf:"/"+stdoutf)
                 ):(
@@ -408,9 +409,9 @@ public class UserServiceImpl implements UserService {
     
 
             addUserBackgroundJob(user.getAccount(), userJob);
-            dockerService.execBackgroundJobs(
+            dockerService.execBackgroundJob(
                 dockerClient,
-                UserServiceImpl.getTagPrefix()+user.getAccount(), 
+                dockerService.getContainerNamePrefix()+user.getAccount(), 
                 userJob.getTimeout(), 
                 userJob.getTimeOutUnit(), 
                 userJob.getStdin(), 
@@ -438,5 +439,49 @@ public class UserServiceImpl implements UserService {
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         } 
+    }
+    @Override
+    public void startUserJob(UserJob userJob) {
+        try {
+            DockerNode dockerNode = dockerService.getDockerNodeByHost(userJob.getHost());
+            //创建Docker客户端
+            DockerClient dockerClient = dockerService.creatClient(
+                dockerService.getDomain()+"."+dockerNode.getHost(),
+                dockerNode.getPort(),
+                dockerNode.getApiVersion());
+            
+            //创建配置信息
+            String stdoutf = userJob.getStdoutfile();
+            String account = userJob.getAccount();
+            String imageName = dockerService.getContainerNamePrefix()+account;
+            FileOutputStream stdout = new FileOutputStream(getUserBaseDir()+ account +
+                (stdoutf!=null && !stdoutf.equals("")?(
+                    (stdoutf.startsWith("/")?stdoutf:"/"+stdoutf)
+                ):(
+                    "/"+userJob.getId()+".log")
+                ));
+            DockerExecConfig config = new DockerExecConfig()
+                .withOutputStream(stdout)
+                .withWorkingDir(getUserBaseDir() + account);
+            
+            //创建docker任务并分配execId
+            String execId = dockerService.createBackgroundJob(
+                dockerClient, imageName, config, userJob.getCmds());
+            userJob.setExecId(execId);
+
+            //开始运行docker任务
+            dockerService.startBackgroundJob(dockerClient, imageName, execId, config, null);
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
+        }
+    }
+    @Override
+    public void stopUserJob(UserJob userJob) {
+        try {
+            DockerNode dockerNode = dockerService.getDockerNodeByHost(userJob.getHost());
+                dockerService.stopBackgroundJob(dockerNode, userJob.getExecId());
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
+        }
     }
 }

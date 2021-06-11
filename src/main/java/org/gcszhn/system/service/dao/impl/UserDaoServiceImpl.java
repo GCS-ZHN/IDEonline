@@ -13,7 +13,7 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service.impl;
+package org.gcszhn.system.service.dao.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
@@ -28,10 +28,10 @@ import org.apache.logging.log4j.Level;
 import org.gcszhn.system.log.AppLog;
 import org.gcszhn.system.security.RandomUtilis;
 import org.gcszhn.system.security.ShaEncrypt;
-import org.gcszhn.system.service.UserDaoService;
+import org.gcszhn.system.service.dao.UserDaoService;
 import org.gcszhn.system.service.exception.UDException;
-import org.gcszhn.system.service.obj.User;
-import org.gcszhn.system.service.obj.UserNode;
+import org.gcszhn.system.service.user.User;
+import org.gcszhn.system.service.user.UserNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;

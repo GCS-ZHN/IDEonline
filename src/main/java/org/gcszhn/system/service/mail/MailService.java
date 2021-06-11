@@ -13,7 +13,7 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service;
+package org.gcszhn.system.service.mail;
 
 import javax.mail.Folder;
 

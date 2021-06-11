@@ -13,7 +13,7 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service.obj;
+package org.gcszhn.system.service.user;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -21,10 +21,11 @@ import java.util.ArrayList;
 import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import org.apache.logging.log4j.Level;
 import org.gcszhn.system.log.AppLog;
-import org.gcszhn.system.service.RedisService;
-import org.gcszhn.system.service.UserService;
+import org.gcszhn.system.service.redis.RedisService;
 import org.gcszhn.system.service.until.SpringTools;
 import org.gcszhn.system.watch.UserEvent;
 import org.gcszhn.system.watch.UserListener;
@@ -45,7 +46,7 @@ public class User implements HttpSessionBindingListener, Serializable {
     @Getter @Setter
     private String account;
     /**密码，限定UserAffairs类进行setter/getter */
-    @Getter @Setter
+    @Getter @Setter @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     /**用户邮箱 */
     @Getter @Setter

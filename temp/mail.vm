@@ -2,14 +2,9 @@
 	用户${user.account}（${user.address}）：
 </p>
 <p>
-&nbsp;再次提醒一下，使用平台跑模型等长时间任务，请利用左侧工具栏新建后台任务。
+&emsp;定于<strong>2021年6月13日（星期日）上午9点-10点对本平台进行升级维护</strong>，解决部分已知BUG，请您确保在更新时段没有进行中的前后台任务。更新时段，网页会显示服务不可用。
 </p>
-<p>
-&nbsp;网络连接中断、关闭浏览器页面等操作<strong>后五分钟</strong>，若没有后台任务，会自动登出账户，并关闭后台容器（用户点击登出按钮，则10秒后关闭容器）。
-</p>
-<p>
-&nbsp;后台任务配置中，命令选项请使用绝对路径，如<strong>/usr/bin/python</strong>，只打一个python不一定能够正确找到命令。
-</p>
+&emsp;另外说明，后台任务创建中的"执行命令"，若命令路径在/root/anaconda3/bin;/root/nodejs/bin;/usr/local/bin等默认环境变量下，如默认装的python、nvidia-smi等命令，不需要全路径。
 <p>
 	<br />
 </p>

@@ -18,8 +18,8 @@ package org.gcszhn.server.http;
 import javax.servlet.http.HttpServletRequest;
 
 import org.gcszhn.system.log.HttpRequestLog;
-import org.gcszhn.system.service.UserService;
-import org.gcszhn.system.service.obj.User;
+import org.gcszhn.system.service.user.UserService;
+import org.gcszhn.system.service.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;

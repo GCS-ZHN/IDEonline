@@ -29,14 +29,13 @@ import org.gcszhn.server.tools.ResponseResult.StatusResult;
 import org.gcszhn.system.log.AppLog;
 import org.gcszhn.system.log.HttpRequestLog;
 import org.gcszhn.system.security.RSAEncrypt;
-import org.gcszhn.system.service.DockerService;
-import org.gcszhn.system.service.UserDaoService;
-import org.gcszhn.system.service.UserService;
-import org.gcszhn.system.service.impl.UserServiceImpl;
-import org.gcszhn.system.service.obj.DockerNode;
-import org.gcszhn.system.service.obj.User;
-import org.gcszhn.system.service.obj.UserNode;
+import org.gcszhn.system.service.user.UserService;
+import org.gcszhn.system.service.dao.UserDaoService;
+import org.gcszhn.system.service.docker.DockerNode;
+import org.gcszhn.system.service.docker.DockerService;
+import org.gcszhn.system.service.user.User;
 import org.gcszhn.system.service.until.HttpRequest;
+import org.gcszhn.system.service.user.UserNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -168,11 +167,11 @@ public class UserAuthController {
                 UserNode userNode = user.getAliveNode();
                 DockerNode dockerNode = dockerService.getDockerNodeByHost(userNode.getHost());
                 try (DockerClient dockerClient = dockerService.creatClient(
-                    UserServiceImpl.getDomain()+"."+userNode.getHost(), 
+                    dockerService.getDomain()+"."+userNode.getHost(), 
                     dockerNode.getPort(), dockerNode.getApiVersion());) {
                     
                     //若容器未启动，再启动容器。
-                    String name = UserServiceImpl.getTagPrefix()+user.getAccount();
+                    String name = dockerService.getContainerNamePrefix()+user.getAccount();
                     
                     dockerService.startContainer(dockerClient, name);
                     //测试内部程序是否启动
@@ -182,7 +181,7 @@ public class UserAuthController {
                             //发起连接测试
                             HttpURLConnection connection = HttpRequest.getHttpURLConnection(
                                 String.format("http://%s.%d:%d/", 
-                                    UserServiceImpl.getDomain(),
+                                    dockerService.getDomain(),
                                     userNode.getHost(),
                                     userNode.getPortMap()[1][0]
                                     ), "get");

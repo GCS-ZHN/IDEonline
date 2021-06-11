@@ -13,17 +13,15 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service;
+package org.gcszhn.system.service.user;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Set;
 
 import javax.servlet.http.HttpSession;
 
-import org.gcszhn.system.service.obj.DockerNode;
-import org.gcszhn.system.service.obj.User;
-import org.gcszhn.system.service.obj.UserJob;
-import org.gcszhn.system.service.obj.UserMail;
-import org.gcszhn.system.service.obj.UserNode;
+import org.gcszhn.system.service.docker.DockerNode;
 import org.springframework.scheduling.annotation.Async;
 
 /**
@@ -74,6 +72,11 @@ public interface UserService {
      * @return Http会话对象
      */
     public HttpSession getUserSession(String username);
+    /**
+     * 获取在线用户集
+     * @return 在线用户集
+     */
+    public Set<User> getOnlineUserSet();
     /**获取在线人数 */
     public int getOnlineUserCount();
     /**
@@ -95,6 +98,11 @@ public interface UserService {
      * @return true表示在线，否表示不在线
      */
     public boolean isOnlineUser(User user);
+    /**
+     * 获取用户任务map
+     * @return 用户任务表
+     */
+    public HashMap<String, HashMap<String, UserJob>> getUserJobList();
     /**
      * 添加用户后台任务记录
      * @param username 用户名
@@ -138,6 +146,17 @@ public interface UserService {
      * @param dockerNode 用户节点
      * @param userJob 用户任务
      */
+    @Deprecated
     @Async
     public void startAsyncJob(User user, DockerNode dockerNode, UserJob userJob);
+    /**
+     * 启动用户任务
+     * @param userJob 任务
+     */
+    public void startUserJob(UserJob userJob);
+    /**
+     * 终止用户任务
+     * @param userJob 用户任务
+     */
+    public void stopUserJob( UserJob userJob);
 }

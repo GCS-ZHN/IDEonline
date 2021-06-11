@@ -13,7 +13,7 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service.obj;
+package org.gcszhn.system.service.docker;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +23,7 @@ import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.api.model.RestartPolicy;
+import com.github.dockerjava.api.model.Volume;
 
 import org.apache.logging.log4j.Level;
 import org.gcszhn.system.log.AppLog;
@@ -111,6 +112,18 @@ public class DockerContainerConfig {
         this.volumeBinds = new Bind[bindingVolumes.length];
         for (int i=0; i< bindingVolumes.length; i++) {
             this.volumeBinds[i] = Bind.parse(bindingVolumes[i]);
+        }
+        return this;
+    }
+    /**
+     * 添加宿主机遇容器的默认硬盘绑定，即两边路径一致的情况
+     * @param bindingVolumes 硬盘卷绑定
+     * @return 容器配置对象
+     */
+    public DockerContainerConfig withVolumeDefaultBindings(String... bindingVolumes) {
+        this.volumeBinds = new Bind[bindingVolumes.length];
+        for (int i=0; i< bindingVolumes.length; i++) {
+            this.volumeBinds[i] = new Bind(bindingVolumes[i], new Volume(bindingVolumes[i]));
         }
         return this;
     }

@@ -13,7 +13,7 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service.impl;
+package org.gcszhn.system.service.mail.impl;
 
 import java.util.Properties;
 
@@ -32,7 +32,7 @@ import javax.mail.internet.MimeMessage;
 import org.apache.logging.log4j.Level;
 import org.gcszhn.system.config.JSONConfig;
 import org.gcszhn.system.log.AppLog;
-import org.gcszhn.system.service.MailService;
+import org.gcszhn.system.service.mail.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;

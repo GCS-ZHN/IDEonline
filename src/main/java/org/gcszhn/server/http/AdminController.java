@@ -15,6 +15,13 @@
  */
 package org.gcszhn.server.http;
 
+import java.util.HashMap;
+import java.util.Set;
+
+import org.gcszhn.system.service.user.UserService;
+import org.gcszhn.system.service.user.User;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -24,5 +31,14 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 public class AdminController {
-    
+    @Autowired
+    UserService userService;
+    @GetMapping("/getuserjoblist")
+    public HashMap<String, ?> doGetUserJobList() {
+        return userService.getUserJobList();
+    }
+    @GetMapping("/getonlineuser")
+    public Set<User> doGetOnlineUser() {
+        return userService.getOnlineUserSet();
+    }
 }
