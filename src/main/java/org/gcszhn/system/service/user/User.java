@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.sql.Timestamp;
 
 import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
@@ -52,23 +53,30 @@ public class User implements HttpSessionBindingListener, Serializable {
     /**用户名，限定UserAffairs类进行使用setter */
     @Getter @Setter
     private String account;
+    /**账号拥有者 */
+    @Getter @Setter
+    private String owner = "";
     /**密码，限定UserAffairs类进行setter/getter */
     @Getter @Setter @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     /**用户邮箱 */
     @Getter @Setter
-    private String address;
+    private String address ="";
     /**活跃节点 */
     @Getter
     private UserNode aliveNode = null;
+    /**用户角色 */
+    @Getter @Setter
+    private UserRole useRole;
+    /**账号创建时间 */
+    @Getter @Setter
+    private Timestamp createTime;
+    /**账号最近登录时间 */
+    @Getter @Setter
+    private Timestamp lastLoginTime;
     /**注册节点列表 */
     @Getter
     private ArrayList<UserNode> nodeConfigs = new ArrayList<>(2);
-
-    /**用户动作枚举类型 */
-    public static enum UserAction {
-        LOGIN, LOGOUT, REGISTER, CANCEL;
-    }
     /**
      * 设置用户注册节点
      * @param nodeConfigs

@@ -17,6 +17,8 @@ package org.gcszhn.server.http;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.sql.Timestamp;
+import java.util.Date;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -138,6 +140,10 @@ public class UserAuthController {
                             //一定时间没有会话范围内的请求，即失效会话，即最大不活跃时间
                             session.setMaxInactiveInterval(300);
                             userService.addOnlineUser(user, session, true);
+
+                            //更新登录时间
+                            user.setLastLoginTime(new Timestamp(new Date().getTime()));
+                            userDaoService.updateUser(user);
                         } else {
                             status = -1;
                         }

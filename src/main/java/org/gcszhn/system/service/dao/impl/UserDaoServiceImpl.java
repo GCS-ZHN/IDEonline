@@ -17,6 +17,7 @@ package org.gcszhn.system.service.dao.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import org.gcszhn.system.service.dao.UserDaoService;
 import org.gcszhn.system.service.exception.UDException;
 import org.gcszhn.system.service.user.User;
 import org.gcszhn.system.service.user.UserNode;
+import org.gcszhn.system.service.user.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -55,12 +57,15 @@ public class UserDaoServiceImpl implements UserDaoService {
     @Override
     public void addUser(User user) {
         try { 
-            String sql = "INSERT INTO "+table+" SET username=?,password=?,nodeconfig=?,address=?";
+            String sql = "INSERT INTO "+table+
+            " SET username=?,password=?,nodeconfig=?,address=?,role=?,owner=?";
             jdbcTemplate.update(sql,
                 user.getAccount(),
                 encryptPassword(user.getPassword()),
                 JSON.toJSONString(user.getNodeConfigs()),
-                user.getAddress()
+                user.getAddress(),
+                user.getUseRole().toString(),
+                user.getOwner()
                 );
             AppLog.printMessage("Register to database successfully");
         } catch (Exception e) {
@@ -84,10 +89,13 @@ public class UserDaoServiceImpl implements UserDaoService {
     @Override
     public int verifyUser(User user) {
         try {
-            String sql = "SELECT password,nodeconfig,address FROM "+table+" WHERE username=?";
+            String sql = "SELECT * FROM "+table+" WHERE username=?";
             List<Map<String, Object>> rs = jdbcTemplate.queryForList(sql, user.getAccount());
             String secret = null;
             String address = null;
+            UserRole role = null;
+            Timestamp createTime = null;
+            Timestamp lastLoginTime = null;
             Object nodeset = null;
             if (rs.size()==1) {
                 secret = (String) rs.get(0).get("password");
@@ -95,6 +103,9 @@ public class UserDaoServiceImpl implements UserDaoService {
                 if (!user.getAccount().equals("root")) {
                     nodeset = rs.get(0).get("nodeconfig");
                 }
+                role = UserRole.valueOf((String) rs.get(0).get("role"));
+                createTime =(Timestamp) rs.get(0).get("create_stamp");
+                lastLoginTime = (Timestamp) rs.get(0).get("last_login_stamp");
             } else if (rs.isEmpty()) {
                 AppLog.printMessage("User not found!", Level.ERROR);
                 return -1;
@@ -111,6 +122,9 @@ public class UserDaoServiceImpl implements UserDaoService {
             // 密码正确时才更新节点信息给当前对象
             if (ShaEncrypt.encrypt(user.getPassword(), arr[0]).equals(arr[1])) {
                 AppLog.printMessage("Authentication successfully!");
+                user.setUseRole(role);
+                user.setCreateTime(createTime);
+                user.setLastLoginTime(lastLoginTime);
                 // root用户是管理员，没有节点信息
                 if (!user.getAccount().equals("root")) {
                     user.setAddress(address);
@@ -152,11 +166,15 @@ public class UserDaoServiceImpl implements UserDaoService {
     @Override
     public void updateUser(User user) {
         try {
-            String sql = "UPDATE "+table+" SET password=?,nodeconfig=?,address=? WHERE username=?";
+            String sql = "UPDATE "+table+
+            " SET password=?,nodeconfig=?,address=?,role=?,owner=?,last_login_stamp=? WHERE username=?";
             jdbcTemplate.update(sql,
                 encryptPassword(user.getPassword()),
                 JSON.toJSONString(user.getNodeConfigs()),
                 user.getAddress(),
+                user.getUseRole().toString(),
+                user.getOwner(),
+                user.getLastLoginTime(),
                 user.getAccount()
             );
             AppLog.printMessage("Update user info successfully!");

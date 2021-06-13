@@ -42,4 +42,7 @@ UPDATE idrb_platform.account SET owner='测试用户' WHERE username='dockerTest
 # ALTER TABLE idrb_platform.account ADD last_login_stamp TIMESTAMP NOT NULL DEFAULT NOW();
 # UPDATE idrb_platform.account SET address='zhanghy@zju.edu.cn' WHERE username='zhanghy';
 # UPDATE idrb_platform.account SET address='caodh@zju.edu.cn' WHERE username='bodao';
-SELECT * FROM idrb_platform.account LIMIT 2
+# SELECT * FROM idrb_platform.account LIMIT 2
+UPDATE idrb_platform.account SET role='manager' WHERE role='M';
+UPDATE idrb_platform.account SET role='root' WHERE role='R';
+UPDATE idrb_platform.account SET role='normal' WHERE role='N';

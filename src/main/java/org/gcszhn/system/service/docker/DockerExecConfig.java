@@ -22,7 +22,7 @@ public class DockerExecConfig implements Serializable {
     /**工作环境变量 */
     private @Getter List<String> envs;
     /**是否以root权限运行 */
-    private @Getter boolean privilage;
+    private @Getter boolean privilege;
     /**是否启用TTY虚拟终端 */
     private @Getter boolean tty;
     /**标准输入流 */
@@ -47,8 +47,8 @@ public class DockerExecConfig implements Serializable {
         this.envs = Arrays.asList(envs);
         return this;
     }
-    public DockerExecConfig withPrivilage(boolean privilage) {
-        this.privilage = privilage;
+    public DockerExecConfig withPrivilege(boolean privilege) {
+        this.privilege = privilege;
         return this;
     }
     public DockerExecConfig withTty(boolean tty) {
