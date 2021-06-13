@@ -1,6 +1,7 @@
 {
     "docker":{
         "prefix":"MULTIPLE1.1-",
+        "rootAuth":"****",
         "domain":"1**.**.**",
         "nodes":[
             {

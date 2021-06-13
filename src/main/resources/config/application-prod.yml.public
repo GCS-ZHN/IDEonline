@@ -1,15 +1,18 @@
 server:
     port: 8080
+    servlet:
+        session:
+            persistent: true
 spring:
     datasource:
         driver-class-name: com.mysql.cj.jdbc.Driver
-        username: <你的数据库系统账号>
-        password: <你的数据库系统密码>
-        url: jdbc:mysql://<你的IP>:<你的数据库服务端口>/<你的数据库名>?characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+        username: ****
+        password: ****
+        url: jdbc:mysql://****:****/****?characterEncoding=utf-8&serverTimezone=Asia/Shanghai
         # 修改默认的javax.sql.DataSource为阿里天池提供的
         type: com.alibaba.druid.pool.DruidDataSource
         # 用户信息数据表名
-        table: <你的用户表>
+        table: ****
         # druid 数据源专有配置
         initialSize: 5
         minIdle: 5
@@ -27,15 +30,10 @@ spring:
         useGlobalDataSourceStat: true
         connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=500
 
-nginx:
-    host: <你的Nginx服务IP>
-    confdir: /etc/nginx/conf.d/tools
-    temp: nginx.vm
-
 redis:
-    host: <你的REDIS服务IP>
-    port: <你的REDIS服务端口>
-    password: <你的REDIS服务密码>
+    host: ****
+    port: ****
+    password: ****
 
 mail:
     transport:
@@ -44,15 +42,22 @@ mail:
         protocol: imap
     smtp:
         class: com.sun.mail.smtp.SMTPSSLTransport
-        host: <你的SMTP服务器>
-        port: <你的SMTP服务端口>
+        host: ****
+        port: ****
+        starttls:
+            enable: true
         ssl:
             enable: true
         auth: true
     imap:
         class: com.sun.mail.imap.IMAPSSLStore
-        port: <你的IMAP服务端口>
+        port: ****
+        host: ****
     auth:
-        username: <你的发件地址>
-        nickname: <你的发件昵称>
-        password: <你的发件密码>
+        username: ****
+        nickname: ****
+        password: ****
+    debug: false
+user:
+    basedir: /public/home
+    sharedirs: /public/packages  ## 多个用分号分隔 
