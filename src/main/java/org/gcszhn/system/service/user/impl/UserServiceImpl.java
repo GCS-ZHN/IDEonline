@@ -37,7 +37,7 @@ import org.gcszhn.system.service.docker.DockerNode;
 import org.gcszhn.system.service.docker.DockerService;
 import org.gcszhn.system.service.mail.MailService;
 import org.gcszhn.system.service.user.User;
-import org.gcszhn.system.service.user.User.UserAction;
+import org.gcszhn.system.service.user.UserAction;
 import org.gcszhn.system.service.velocity.VelocityService;
 import org.gcszhn.system.service.user.UserJob;
 import org.gcszhn.system.service.user.UserNode;
@@ -264,12 +264,17 @@ public class UserServiceImpl implements UserService {
 
             //只允许一个会话在线
             if (oldSession != null && overwrite) {
-                //绑定新会话，再解绑旧会话，防止容器关闭
+                //先登出原会话
+                try {
+                    oldSession.invalidate();
+                } catch (IllegalStateException e) {
+                    AppLog.printMessage(e.getMessage());
+                }
+
+                //绑定新会话
                 session.setAttribute("user", user);
                 onlineUsers.put(user.getAccount(), session);
                 AppLog.printMessage(user.getAccount()+ " is added to online map");
-                //解绑旧会话，注意不要直接使用invalidate，否则可能抛出异常
-                oldSession.setMaxInactiveInterval(1);
             } else if (oldSession == null) { 
                 onlineUsers.put(user.getAccount(), session);
                 session.setAttribute("user", user);
