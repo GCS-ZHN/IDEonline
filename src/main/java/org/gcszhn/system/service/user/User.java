@@ -17,6 +17,8 @@ package org.gcszhn.system.service.user;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
@@ -38,6 +40,11 @@ import lombok.Setter;
  * @version 1.0
  */
 public class User implements HttpSessionBindingListener, Serializable {
+    /**线程锁对象 */
+    public static ReentrantLock lock = new ReentrantLock(true);
+    /**登出专用情况线程锁 */
+    public static Condition logoutConditon = lock.newCondition();
+
     /**用户监听器容器 */
     private ArrayList<UserListener> userListeners = new ArrayList<>();
     /**序列化ID */
@@ -68,6 +75,7 @@ public class User implements HttpSessionBindingListener, Serializable {
      */
     public void setNodeConfigs(ArrayList<UserNode> nodeConfigs) {
         this.nodeConfigs = nodeConfigs;
+        
     }
     /**
      * 设置用户注册节点

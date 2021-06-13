@@ -21,7 +21,6 @@ import java.util.Set;
 
 import javax.servlet.http.HttpSession;
 
-import org.gcszhn.system.service.docker.DockerNode;
 import org.springframework.scheduling.annotation.Async;
 
 /**
@@ -131,9 +130,10 @@ public interface UserService {
     /**
      * 判断用户是否有后台任务
      * @param username 用户名
+     * @param host 任务节点主机ID
      * @return true表示由后台任务，false表示无后台任务
      */
-    public boolean hasUserBackgroundJob(String username);
+    public boolean hasUserBackgroundJob(String username, int host);
     /**
      * 获取用户任务集合
      * @param username 用户名
@@ -141,18 +141,10 @@ public interface UserService {
      */
     public Collection<UserJob> getUserJobSet(String username);
     /**
-     * 启动异步任务
-     * @param user 用户
-     * @param dockerNode 用户节点
-     * @param userJob 用户任务
-     */
-    @Deprecated
-    @Async
-    public void startAsyncJob(User user, DockerNode dockerNode, UserJob userJob);
-    /**
      * 启动用户任务
      * @param userJob 任务
      */
+    @Async
     public void startUserJob(UserJob userJob);
     /**
      * 终止用户任务

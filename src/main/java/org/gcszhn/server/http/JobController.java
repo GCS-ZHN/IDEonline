@@ -15,7 +15,6 @@
  */
 package org.gcszhn.server.http;
 
-import java.io.PipedOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -30,11 +29,10 @@ import org.apache.logging.log4j.Level;
 import org.gcszhn.server.tools.ResponseResult.JobResult;
 import org.gcszhn.system.log.AppLog;
 import org.gcszhn.system.log.HttpRequestLog;
-import org.gcszhn.system.service.user.UserService;
-import org.gcszhn.system.service.docker.DockerNode;
 import org.gcszhn.system.service.docker.DockerService;
 import org.gcszhn.system.service.user.User;
 import org.gcszhn.system.service.user.UserJob;
+import org.gcszhn.system.service.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -43,7 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 后台任务请求控制器
  * @author Zhang.H.N
- * @version 1.0
+ * @version 1.2
  */
 @RestController
 public class JobController {
@@ -66,8 +64,7 @@ public class JobController {
      * @param args 命令参数
      * @return 提交状态
      */
-    @Deprecated
-    @GetMapping("/submit")
+    @GetMapping("/submitjob")
     public JobResult doSubmitJob(
         @RequestParam String stdoutf, 
         @RequestParam String tmout,
@@ -92,23 +89,29 @@ public class JobController {
                         case "h": timeOutUnit = TimeUnit.HOURS;break;
                     }
 
+                    //命令的处理
+                    cmd = cmd.strip();
+                    String[] argArray = args.strip().split("\\s+");
+                    String[] cmds = new String[argArray.length + 1];
+                    cmds[0] = cmd;
+                    for (int i = 1; i < cmds.length; i++) {
+                        cmds[i] = argArray[i-1];
+                    }
 
-                    DockerNode dockerNode = dockerService.getDockerNodeByHost(
-                        user.getAliveNode().getHost());
                     /**用户任务实例 */
                     UserJob userJob = new UserJob();
                     Date createTime = new Date();
                     userJob.setId("background"+createTime.getTime());
-                    userJob.setCmd(args.equals("")?cmd:cmd+" "+args);
-                    userJob.setUser(user);
+                    userJob.setHost(user.getAliveNode().getHost());
+                    userJob.setCmds(cmds);
+                    userJob.setAccount(user.getAccount());
                     userJob.setCreatedTime(createTime);
-                    userJob.setStdin(new PipedOutputStream());
-                    userJob.setStdoutfile(stdoutf);
+                    userJob.setStdoutfile(stdoutf.equals("")?"default":stdoutf);
                     userJob.setTimeout(timeout);
                     userJob.setTimeOutUnit(timeOutUnit);
                     AppLog.printMessage("Prepared for start a background job");
                     /**启动异步任务 */
-                    userService.startAsyncJob(user, dockerNode, userJob);
+                    userService.startUserJob(userJob);
                     res.setStatus(0);
                     res.setJobId(userJob.getId());
                     res.setJobstatus("running");
@@ -126,8 +129,7 @@ public class JobController {
      * @param jobid 要求主动终止的任务ID
      * @return 任务状态
      */
-    @Deprecated
-    @GetMapping("/terminate")
+    @GetMapping("/terminatejob")
     public JobResult doTerminateJob(@RequestParam String jobid) {
         HttpRequestLog.log(request);
         JobResult res = new JobResult();
@@ -140,10 +142,7 @@ public class JobController {
                     res.setStatus(-1);
                     res.setJobstatus("No job found");
                 } else {
-                    //发送^C关闭信号，不一定关闭
-                    userJob.close();
-                    //移除在线列表
-                    userService.removeUserBackgroundJob(user.getAccount(), userJob);
+                    userService.stopUserJob(userJob);
                     res.setStatus(0);
                     res.setJobstatus("exit");
                     res.setJobId(jobid);
@@ -155,7 +154,10 @@ public class JobController {
         }
         return res;
     }
-
+    /**
+     * 获取该用户所有节点下的任务
+     * @return 节点对象
+     */
     @GetMapping("/joblist")
     public JSONArray doJobList() {
         HttpRequestLog.log(request);
@@ -169,9 +171,10 @@ public class JobController {
                     userService.getUserJobSet(user.getAccount()).forEach((UserJob userJob)->{
                         JSONObject jsonObject = new JSONObject();
                         jsonObject.put("jobid", userJob.getId());
-                        jsonObject.put("cmd", userJob.getCmds());
+                        jsonObject.put("cmd", userJob.getCmd());
                         jsonObject.put("stdoutf", userJob.getStdoutfile());
                         jsonObject.put("created", sdf.format(userJob.getCreatedTime()));
+                        jsonObject.put("node", userJob.getHost());
                         arrayList.add(jsonObject);
                     });
                 }

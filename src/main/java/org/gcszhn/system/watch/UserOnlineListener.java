@@ -15,6 +15,8 @@
  */
 package org.gcszhn.system.watch;
 
+import java.util.concurrent.TimeUnit;
+
 import com.github.dockerjava.api.DockerClient;
 
 import org.apache.logging.log4j.Level;
@@ -48,34 +50,42 @@ public class UserOnlineListener implements UserListener {
             UserService userService = SpringTools.getBean(UserService.class);
             /**
              * 建立docker服务连接，关闭容器
-             * 获取服务的锁，保证正常关闭不受到干扰
+             * 获取用户登出专用的锁，保证正常关闭不受到干扰
+             * 避免使用bean组件作为锁的源，因为spring可能会创建代理对象。
              */
-            synchronized(userService) {
-                //等待后台任务完成
-                while (userService.hasUserBackgroundJob(user.getAccount())) {
-                    userService.wait();
-                }
-
-                //延迟10秒开始关闭，若期间被其他线程获取锁，可以终止关闭容器
-                userService.wait(10000);
-
-                //若获取锁前，已经重新登录相同节点，停止退出容器
-                if (userService.isOnlineUser(user)) return;
-
-                //正式开始关闭服务
-                DockerService dockerService = SpringTools.getBean(DockerService.class);
-                UserNode aliveNode = user.getAliveNode();
-                DockerNode dockerNode = dockerService.getDockerNodeByHost(aliveNode.getHost());
-                try (DockerClient dockerClient = dockerService.creatClient(
-                    dockerService.getDomain()+"."+aliveNode.getHost(), 
-                    dockerNode.getPort(), dockerNode.getApiVersion())) {
-                        dockerService.stopContainer(dockerClient, 
-                            dockerService.getContainerNamePrefix()+user.getAccount());
-                }
-                AppLog.printMessage(
-                    String.format("%s's container at %d closed", 
-                    user.getAccount(), aliveNode.getHost()));
+            User.lock.lock();
+            UserNode aliveNode = user.getAliveNode();
+            AppLog.printMessage(
+                String.format("Wait to close %s's container at %d", 
+                user.getAccount(), aliveNode.getHost()));
+            //等待后台任务完成
+            while (userService.hasUserBackgroundJob(user.getAccount(), aliveNode.getHost())) {
+                User.logoutConditon.await();
             }
+
+            //延迟10秒开始关闭，若期间用户重新登录，可以终止关闭容器
+            User.logoutConditon.await(10, TimeUnit.SECONDS);
+
+            //若获取锁前，已经重新登录相同节点，停止退出容器
+            if (userService.isOnlineUser(user)) return;
+            AppLog.printMessage(
+                String.format("Begin to close %s's container at %d", 
+                user.getAccount(), aliveNode.getHost()));
+            //正式开始关闭服务
+            DockerService dockerService = SpringTools.getBean(DockerService.class);
+            DockerNode dockerNode = dockerService.getDockerNodeByHost(aliveNode.getHost());
+            try (DockerClient dockerClient = dockerService.creatClient(
+                dockerService.getDomain()+"."+aliveNode.getHost(), 
+                dockerNode.getPort(), dockerNode.getApiVersion())) {
+                    dockerService.stopContainer(dockerClient, 
+                        dockerService.getContainerNamePrefix()+user.getAccount());
+            }
+            AppLog.printMessage(
+                String.format("%s's container at %d closed", 
+                user.getAccount(), aliveNode.getHost()));
+            
+            //解锁
+            User.lock.unlock();
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         }

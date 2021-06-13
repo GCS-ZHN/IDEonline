@@ -128,7 +128,7 @@ public interface DockerService {
      * @param dockerNode docker节点
      * @param execId 执行任务ID
      */
-    public void stopBackgroundJob(DockerNode dockerNode, String execId);
+    public void stopBackgroundJob(DockerNode dockerNode, String execId, Runnable normCallBack);
     /**
      * 获取Docker exec进程的运行状态
      * @param dockerClient docker客户端

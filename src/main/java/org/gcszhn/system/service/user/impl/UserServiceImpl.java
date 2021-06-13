@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpSession;
 
@@ -212,12 +213,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public void sendAsyncMail(User user, UserMail userMail) {
         try {
-            mailService.sendMail(user.getAddress(), // 邮件地址
-                    userMail.getSubject(), // 邮件主题
-                    velocityService.getResult( // 模板过滤
-                            userMail.getVmfile(), // 模板文件
-                            userMail.getInitContext().apply(user)), // 模板变量自定义处理
-                    userMail.getContentType()); // 邮件MINE类型
+            mailService.sendMail(
+                    user.getAddress(),                               // 邮件地址
+                    userMail.getSubject(),                           // 邮件主题
+                    velocityService.getResult(                       // 模板过滤
+                            userMail.getVmfile(),                    // 模板文件
+                            userMail.getInitContext().apply(user)),  // 模板变量自定义处理
+                    userMail.getContentType());                      // 邮件MINE类型
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         }
@@ -228,8 +230,7 @@ public class UserServiceImpl implements UserService {
         try {
             userDaoService.fetchUserList().forEach((User user) -> {
                 if (user.getAddress() != null) {
-                    //这里是异步发送
-                    sendAsyncMail(user, userMail);
+                    sendAsyncMail(user, userMail);    //这里是异步发送
                 }
             });
         } catch (Exception e) {
@@ -355,11 +356,14 @@ public class UserServiceImpl implements UserService {
                 if (list.isEmpty()) userJobs.remove(username);
             }
             
-            //用户不存在任务，通知被阻塞用户在线监听器，允许关闭容器
-            if (!hasUserBackgroundJob(username)) {
-                notifyAll(); 
-            }
-            AppLog.printMessage(String.format("job %s for user %s with cmd: '%s' removed", userJob.getId(), username, userJob.getCmd()));
+            //通知用户监听器，若对应节点没有任务则关闭容器
+            User.lock.lock();
+            User.logoutConditon.signalAll();
+            User.lock.unlock(); 
+            
+            AppLog.printMessage(
+                String.format("job %s for user %s with cmd: '%s' at node %d removed", 
+                userJob.getId(), username, userJob.getCmd(), userJob.getHost()));
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         }
@@ -379,8 +383,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean hasUserBackgroundJob(String username) {
-        return getUserBackgroundJobCount(username)!=0;
+    public boolean hasUserBackgroundJob(String username, int host) {
+        int onlineCount = 0;
+        if (this.userJobs.get(username) != null) {
+            for (UserJob job: this.userJobs.get(username).values()) {
+                if (job.getHost()==host) onlineCount++;
+            }
+        }
+        AppLog.printMessage(
+            String.format("Current job count is %d at node %d", onlineCount, host));
+        return onlineCount > 0;
     }
     @Override
     public Collection<UserJob> getUserJobSet(String username) {
@@ -388,58 +400,6 @@ public class UserServiceImpl implements UserService {
         return list==null?new HashMap<String, UserJob>().values(): list.values();
     }
 
-    @Deprecated
-    @Override
-    public void startAsyncJob(User user, DockerNode dockerNode, UserJob userJob) {
-        try (DockerClient dockerClient = dockerService.creatClient(
-            dockerService.getDomain()+"."+dockerNode.getHost(), 
-            dockerNode.getPort(),
-            dockerNode.getApiVersion()
-            )) {
-
-            String stdoutf = userJob.getStdoutfile();
-            
-            /**标准输出,资源关闭由dockerService内回调方法完成 */
-            FileOutputStream stdout = new FileOutputStream(getUserBaseDir()+
-                (stdoutf!=null && !stdoutf.equals("")?(
-                        user.getAccount()+ (stdoutf.startsWith("/")?stdoutf:"/"+stdoutf)
-                ):(
-                    user.getAccount()+"/"+userJob.getId()+".log")
-                ));
-    
-
-            addUserBackgroundJob(user.getAccount(), userJob);
-            dockerService.execBackgroundJob(
-                dockerClient,
-                dockerService.getContainerNamePrefix()+user.getAccount(), 
-                userJob.getTimeout(), 
-                userJob.getTimeOutUnit(), 
-                userJob.getStdin(), 
-                stdout, 
-                stdout,
-                ()->{try {
-                        userJob.close(false);  //回调关闭任务输入流
-                    } catch (Exception e) {
-                        AppLog.printMessage(null, e, Level.ERROR);
-                }},
-                userJob.getCmd().split("\\s+")
-                );
-            
-            //任务超时而而非主动关闭时
-            userJob.close();
-
-            //关闭
-            dockerClient.close();
-            removeUserBackgroundJob(user.getAccount(), userJob);
-
-            //通知等待该任务结束的线程
-            synchronized(userJob) {
-            userJob.notifyAll();
-            }
-        } catch (Exception e) {
-            AppLog.printMessage(null, e, Level.ERROR);
-        } 
-    }
     @Override
     public void startUserJob(UserJob userJob) {
         try {
@@ -455,7 +415,7 @@ public class UserServiceImpl implements UserService {
             String account = userJob.getAccount();
             String imageName = dockerService.getContainerNamePrefix()+account;
             FileOutputStream stdout = new FileOutputStream(getUserBaseDir()+ account +
-                (stdoutf!=null && !stdoutf.equals("")?(
+                (stdoutf!=null && !stdoutf.equals("default")?(
                     (stdoutf.startsWith("/")?stdoutf:"/"+stdoutf)
                 ):(
                     "/"+userJob.getId()+".log")
@@ -470,7 +430,19 @@ public class UserServiceImpl implements UserService {
             userJob.setExecId(execId);
 
             //开始运行docker任务
-            dockerService.startBackgroundJob(dockerClient, imageName, execId, config, null);
+            addUserBackgroundJob(userJob.getAccount(), userJob);
+            dockerService.startBackgroundJob(dockerClient, imageName, execId, config, ()->{
+                synchronized(userJob) {
+                    userJob.notifyAll();
+                }
+            });
+
+            //阻塞当前线程至任务完成或超时
+            synchronized(userJob) {
+                userJob.wait(TimeUnit.MILLISECONDS.convert(
+                    userJob.getTimeout(), userJob.getTimeOutUnit()));
+            }
+            stopUserJob(userJob);
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         }
@@ -479,7 +451,13 @@ public class UserServiceImpl implements UserService {
     public void stopUserJob(UserJob userJob) {
         try {
             DockerNode dockerNode = dockerService.getDockerNodeByHost(userJob.getHost());
-                dockerService.stopBackgroundJob(dockerNode, userJob.getExecId());
+            dockerService.stopBackgroundJob(
+                dockerNode, 
+                userJob.getExecId(),
+                ()->{
+                    removeUserBackgroundJob(userJob.getAccount(), userJob);
+                });
+            
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
         }

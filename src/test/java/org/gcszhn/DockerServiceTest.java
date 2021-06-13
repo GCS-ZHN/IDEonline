@@ -88,9 +88,26 @@ public class DockerServiceTest extends AppTest {
     @Test
     public void testDockerExecStatus() {
         InspectExecResponse response = dockerService.getBackgroundStatus(
-            client, "6ddd367abf771f5186d81007b3092bf4c7177499596332a07f3b0b636c1ead80");
+            client, "4b12acc290aa84cabec542b6a4c6b2eee2166a3c855ac556b8a6710c58b12c18");
         System.out.println(response.getPidLong());
         System.out.println(response.getExitCodeLong());
         System.out.println(response.isRunning());
+    }
+    @Test
+    public void testStartBackgroundJob() throws InterruptedException {
+        dockerService.startBackgroundJob(
+            client, 
+            "MULTIPLE1.1-zhanghn", 
+            "4b12acc290aa84cabec542b6a4c6b2eee2166a3c855ac556b8a6710c58b12c18", 
+            new DockerExecConfig(), 
+            ()->{
+                synchronized(dockerService) {
+                    System.out.println("Finished it");
+                    dockerService.notifyAll();
+                }
+            });
+        synchronized(dockerService) {
+            dockerService.wait();
+        }
     }
 }

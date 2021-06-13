@@ -129,15 +129,15 @@
             <properties>
                 <profileActive>dev</profileActive>
             </properties>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
         </profile>
         <profile>
             <id>test</id>
             <properties>
                 <profileActive>test</profileActive>
             </properties>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
         </profile>
         <profile>
             <id>prod</id>

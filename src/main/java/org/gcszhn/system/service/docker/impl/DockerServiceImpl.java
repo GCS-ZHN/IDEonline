@@ -315,7 +315,6 @@ public class DockerServiceImpl implements DockerService {
         DockerExecConfig config, Runnable completeCallback) {
         try {
             OutputStream outputStream = config.getOutputStream();
-            
             dockerClient.execStartCmd(execId).withStdIn(config.getInputStream())
                 .exec(new ResultCallback.Adapter<Frame>() {
                     @Override
@@ -358,7 +357,7 @@ public class DockerServiceImpl implements DockerService {
         }
     }
     @Override
-    public void stopBackgroundJob(DockerNode dockerNode, String execId) {
+    public void stopBackgroundJob(DockerNode dockerNode, String execId, Runnable normCallBack) {
         String ip = getDomain()+"."+dockerNode.getHost();
         try(
             DockerClient dockerClient = creatClient(
@@ -373,11 +372,15 @@ public class DockerServiceImpl implements DockerService {
                     ProcessInteraction.remoteExec(ip, rootAuth, true, 
                     (Process p)->{
                         AppLog.printMessage("Job "+execId+" with PID "+pid+" killed");
+                        normCallBack.run();
                     },
                     (Process p)->{
                         AppLog.printMessage("Job "+execId+" with PID "+pid+" killed failed");
                     }, "kill -9 " + pid);
                 }
+            } else {
+                AppLog.printMessage("Job "+execId+" isn't running");
+                normCallBack.run();
             }
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
