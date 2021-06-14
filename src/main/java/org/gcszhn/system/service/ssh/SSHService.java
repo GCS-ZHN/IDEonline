@@ -13,13 +13,21 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service.user;
+package org.gcszhn.system.service.ssh;
+
+import java.io.OutputStream;
+import java.util.Properties;
+
+import com.jcraft.jsch.Session;
 
 /**
- * 用户动作
+ * SSH远程连接服务
  * @author Zhang.H.N
  * @version 1.0
  */
-public enum UserAction {
-    LOGIN, LOGOUT, REGISTER, CANCEL;
+public interface SSHService {
+    public Session getSession(String username, String passwd, String host, 
+    int port, int timeout, Properties sshConfig);
+    public Session getConfigSession(int host);
+    public void remoteExec(Session session, String cmds, OutputStream outputStream, OutputStream errStream);
 }

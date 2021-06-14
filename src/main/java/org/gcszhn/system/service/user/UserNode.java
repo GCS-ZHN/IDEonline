@@ -20,8 +20,8 @@ import java.io.Serializable;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
+import org.gcszhn.system.service.cluster.ClusterService;
 import org.gcszhn.system.service.docker.DockerNode;
-import org.gcszhn.system.service.docker.DockerService;
 import org.gcszhn.system.service.until.SpringTools;
 
 import lombok.Getter;
@@ -50,7 +50,7 @@ public class UserNode implements Serializable {
      * @param portMap 端口映射
      */
     public UserNode(int host, boolean enableGPU, boolean withPrivilege, int[][] portMap) {
-        DockerNode node = SpringTools.getBean(DockerService.class).getDockerNodeByHost(host);
+        DockerNode node = SpringTools.getBean(ClusterService.class).getDockerNodeByHost(host);
         if (node != null) {
             this.host = host;
             this.enableGPU = node.getDevice()!=null 

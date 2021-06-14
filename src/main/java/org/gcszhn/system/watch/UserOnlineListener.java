@@ -22,6 +22,7 @@ import com.github.dockerjava.api.DockerClient;
 import org.apache.logging.log4j.Level;
 import org.gcszhn.system.log.AppLog;
 import org.gcszhn.system.service.user.UserService;
+import org.gcszhn.system.service.cluster.ClusterService;
 import org.gcszhn.system.service.docker.DockerNode;
 import org.gcszhn.system.service.docker.DockerService;
 import org.gcszhn.system.service.user.User;
@@ -73,12 +74,13 @@ public class UserOnlineListener implements UserListener {
                 user.getAccount(), aliveNode.getHost()));
             //正式开始关闭服务
             DockerService dockerService = SpringTools.getBean(DockerService.class);
-            DockerNode dockerNode = dockerService.getDockerNodeByHost(aliveNode.getHost());
+            ClusterService clusterService = SpringTools.getBean(ClusterService.class);
+            DockerNode dockerNode = clusterService.getDockerNodeByHost(aliveNode.getHost());
             try (DockerClient dockerClient = dockerService.creatClient(
-                dockerService.getDomain()+"."+aliveNode.getHost(), 
+                clusterService.getClusterDomain()+"."+aliveNode.getHost(), 
                 dockerNode.getPort(), dockerNode.getApiVersion())) {
                     dockerService.stopContainer(dockerClient, 
-                        dockerService.getContainerNamePrefix()+user.getAccount());
+                        clusterService.getClusterContainerPrefix()+user.getAccount());
             }
             AppLog.printMessage(
                 String.format("%s's container at %d closed", 

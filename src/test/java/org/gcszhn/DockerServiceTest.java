@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2021 <a href="mailto:zhang.h.n@foxmail.com">Zhang.H.N</a>.
+ *
+ * Licensed under the Apache License, Version 2.0 (thie "License");
+ * You may not use this file except in compliance with the license.
+ * You may obtain a copy of the License at
+ *
+ *       http://wwww.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language govering permissions and
+ * limitations under the License.
+ */
 package org.gcszhn;
 
 import java.io.IOException;
@@ -10,7 +25,6 @@ import org.gcszhn.system.log.AppLog;
 import org.gcszhn.system.service.docker.DockerContainerConfig;
 import org.gcszhn.system.service.docker.DockerExecConfig;
 import org.gcszhn.system.service.docker.DockerService;
-import org.gcszhn.system.service.docker.impl.DockerServiceImpl;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -27,7 +41,7 @@ public class DockerServiceTest extends AppTest {
     @Autowired
     public void setDockerClient() {
         this.client = dockerService.creatClient(
-            "172.16.10.210", 2375, DockerServiceImpl.getDefaultApiVersion());
+            "172.16.10.210", 2375, "1.41");
     }
     @Test
     public void testDockerContainer() {

@@ -15,10 +15,6 @@
  */
 package org.gcszhn.system.service.docker;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.concurrent.TimeUnit;
-
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.InspectExecResponse;
@@ -70,31 +66,12 @@ public interface DockerService {
      */
     public void updateContainer(DockerClient dockerClient, String name, DockerContainerConfig config);
     /**
-     * 获取指定主机号的Docker节点对象，若主机号不在范围内，返回为null
-     * @param host 主机号
-     * @return Docker节点对象
-     */
-    public DockerNode getDockerNodeByHost(int host);
-
-    /**
      * 获取容器的运行状态
      * @param dockerClient docker客户端
      * @param name 容器id或名称
      * @return true代表在运行，false代表不运行
      */
     public boolean getContainerStatus(DockerClient dockerClient, String name);
-
-    @Deprecated
-    public String execBackgroundJob(
-        DockerClient dockerClient, 
-        String name, 
-        long timeout, 
-        TimeUnit unit,
-        InputStream inputStream,
-        OutputStream outputStream,
-        OutputStream errStream,
-        Runnable completeCallback,
-        String... cmd);
     /**
      * 创建docker后台任务，但并未启动，返回execId
      * @param dockerClient docker客户端
@@ -136,18 +113,4 @@ public interface DockerService {
      * @return 状态对象
      */
     public InspectExecResponse getBackgroundStatus(DockerClient dockerClient, String execId);
-    /**获取docker服务器集群root密码
-     * @return root密码
-     */
-    public String getRootAuth();
-    /**
-     * 获取docker服务器集群IP域
-     * @return IP域
-     */
-    public String getDomain();
-    /**
-     * 获取docker容器统一的名称前缀
-     * @return 名称前缀
-     */
-    public String getContainerNamePrefix();
 }

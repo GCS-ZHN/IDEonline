@@ -60,4 +60,6 @@ mail:
     debug: false
 user:
     basedir: /public/home
-    sharedirs: /public/packages  ## 多个用分号分隔 
+    sharedirs: /public/packages  ## 多个用分号分隔
+ssh:
+    StrictHostKeyChecking: no

@@ -15,17 +15,13 @@
  */
 package org.gcszhn.system.service.docker.impl;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
@@ -39,19 +35,18 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
+import com.jcraft.jsch.Session;
 
 import org.apache.logging.log4j.Level;
-import org.gcszhn.system.config.JSONConfig;
 import org.gcszhn.system.log.AppLog;
+import org.gcszhn.system.service.cluster.ClusterService;
 import org.gcszhn.system.service.docker.DockerContainerConfig;
 import org.gcszhn.system.service.docker.DockerExecConfig;
 import org.gcszhn.system.service.docker.DockerNode;
 import org.gcszhn.system.service.docker.DockerService;
-import org.gcszhn.system.service.until.ProcessInteraction;
+import org.gcszhn.system.service.ssh.SSHService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import lombok.Getter;
 
 /**
  * Docker服务的接口实现
@@ -60,52 +55,12 @@ import lombok.Getter;
  */
 @Service
 public class DockerServiceImpl implements DockerService {
-    /**默认的Docker API版本 */
-    private @Getter static String defaultApiVersion = "1.41";
-    /**docker服务器集群root密码 */
-    private @Getter String rootAuth;
-    /**docker服务器集群IP域 */
-    private @Getter String domain;
-    /**docker容器统一名称前缀 */
-    private @Getter String containerNamePrefix;
-    /**可用Docker服务节点 */
-    private Map<Integer, DockerNode> dockerNodes;
-    /**
-     * 设置Docker服务节点
-     * @param config App的JSON配置对象
-     */
+    /**集群服务 */
     @Autowired
-    public void setDockerConfig(JSONConfig config) {
-        try {
-            rootAuth = config.getDockerConfig().getString("rootAuth");
-            domain = config.getDockerConfig().getString("domain");
-            containerNamePrefix = config.getDockerConfig().getString("prefix");
-            JSONArray nodes = config.getDockerConfig().getJSONArray("nodes");
-            dockerNodes = new HashMap<>(nodes.size());
-            for (int i=0; i< nodes.size(); i++) {
-                JSONObject nodeJson = nodes.getJSONObject(i);
-                DockerNode dockerNode = new DockerNode();
-                dockerNode.setHost(nodeJson.getIntValue("host"));
-                dockerNode.setPort(nodeJson.getIntValue("port"));
-                dockerNode.setImage(nodeJson.getString("image"));
-                dockerNode.setApiVersion(nodeJson.getString("apiVersion"));
-                JSONObject deviceJSON = nodeJson.getJSONObject("device");
-                if (deviceJSON!=null) {
-                    Map<String, List<Object>> devices = new HashMap<>(deviceJSON.size());
-                    dockerNode.setDevice(devices);
-                    for (String key: deviceJSON.keySet()) {
-                        devices.put(key, deviceJSON.getJSONArray(key));
-                    }
-                } else {
-                    dockerNode.setDevice(null);
-                }
-                dockerNodes.put(dockerNode.getHost(), dockerNode);
-            }
-        } catch (Exception e) {
-            AppLog.printMessage(null, e, Level.ERROR);
-        }
-    }
-
+    ClusterService clusterService;
+    /**SSH服务 */
+    @Autowired
+    SSHService sshService;
     @Override
     public DockerClient creatClient(String ip, int port, String apiVersion) {
             String url = String.format("tcp://%s:%d", ip, port);
@@ -220,15 +175,6 @@ public class DockerServiceImpl implements DockerService {
         }
     }
     @Override
-    public DockerNode getDockerNodeByHost(int host) {
-        if (dockerNodes != null) {
-            return dockerNodes.get(host);
-        } else {
-            AppLog.printMessage("Docker node map hasn't been initialized", Level.ERROR);
-            return null;
-        }
-    }
-    @Override
     public boolean getContainerStatus(DockerClient dockerClient, String name) {
         try {
             InspectContainerResponse response = dockerClient.inspectContainerCmd(name).exec();
@@ -236,63 +182,6 @@ public class DockerServiceImpl implements DockerService {
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
             return false;
-        }
-    }
-    @Override
-    public String execBackgroundJob(
-        DockerClient dockerClient, String name, long timeout, 
-        TimeUnit unit, InputStream inputStream, OutputStream outputStream,
-        OutputStream errStream, Runnable completeCallback, String... cmd) {
-        try {
-            String execId = dockerClient.execCreateCmd(name)
-                .withCmd(cmd)
-                .withAttachStdin(true)
-                .withAttachStdout(true)
-                .withAttachStderr(true)
-                .withTty(true)
-                .exec().getId();
-            AppLog.printMessage("Background job started");
-            //过程是异步执行的，故需要await, 当前线程等待子线程完成，即调用onComplete回调
-            dockerClient.execStartCmd(execId).withStdIn(inputStream)
-                .exec(new ResultCallback.Adapter<Frame>() {
-                    //重写onNext回调，输出信息
-                    @Override
-                    public void onNext(Frame object) {
-                        try {
-                            switch(object.getStreamType()) {
-                                case STDERR:{
-                                    errStream.write(object.getPayload());
-                                    errStream.flush();
-                                    break;
-                                } case STDOUT: {
-                                    outputStream.write(object.getPayload());
-                                    outputStream.flush();
-                                    break;
-                                }default: break;
-                            }
-                        } catch (Exception e) {
-                            AppLog.printMessage(null, e, Level.ERROR);
-                        }
-                    }
-                    @Override
-                    public void onComplete() {
-                        super.onComplete();
-                        if (completeCallback != null) completeCallback.run();
-                        try {
-                            errStream.close();
-                            if (outputStream!=errStream) outputStream.close();
-                        } catch (Exception e) {
-                            AppLog.printMessage(null, e, Level.ERROR);
-                        }
-                    }
-                }).awaitCompletion(timeout, unit);
-                
-            
-            AppLog.printMessage("Background job finished or timeout");
-            return execId;
-        } catch (Exception e) {
-            AppLog.printMessage(null, e, Level.ERROR);
-            return null;
         }
     }
     @Override
@@ -358,7 +247,7 @@ public class DockerServiceImpl implements DockerService {
     }
     @Override
     public void stopBackgroundJob(DockerNode dockerNode, String execId, Runnable normCallBack) {
-        String ip = getDomain()+"."+dockerNode.getHost();
+        String ip = clusterService.getClusterDomain() +"."+dockerNode.getHost();
         try(
             DockerClient dockerClient = creatClient(
             ip, 
@@ -369,14 +258,21 @@ public class DockerServiceImpl implements DockerService {
             if (response.isRunning()) {
                 Long pid = response.getPidLong();
                 if (pid > 0) {
-                    ProcessInteraction.remoteExec(ip, rootAuth, true, 
-                    (Process p)->{
-                        AppLog.printMessage("Job "+execId+" with PID "+pid+" killed");
+                    Session session = sshService.getConfigSession(dockerNode.getHost());
+                    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+                    ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+                    sshService.remoteExec(
+                        session, 
+                        "kill -9 " +pid, stdout, stderr);
+                    String stdoutInfo = stdout.toString();
+                    String stderrInfo = stderr.toString();
+                    if (!stdoutInfo.equals("")) AppLog.printMessage(stdoutInfo);
+                    if (!stderrInfo.equals("")) {
+                        AppLog.printMessage(stderrInfo, Level.ERROR);
+                    } else {
+                        AppLog.printMessage("Terminate job successfully");
                         normCallBack.run();
-                    },
-                    (Process p)->{
-                        AppLog.printMessage("Job "+execId+" with PID "+pid+" killed failed");
-                    }, "kill -9 " + pid);
+                    }
                 }
             } else {
                 AppLog.printMessage("Job "+execId+" isn't running");

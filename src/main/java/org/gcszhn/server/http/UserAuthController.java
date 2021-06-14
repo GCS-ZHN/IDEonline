@@ -32,6 +32,7 @@ import org.gcszhn.system.log.AppLog;
 import org.gcszhn.system.log.HttpRequestLog;
 import org.gcszhn.system.security.RSAEncrypt;
 import org.gcszhn.system.service.user.UserService;
+import org.gcszhn.system.service.cluster.ClusterService;
 import org.gcszhn.system.service.dao.UserDaoService;
 import org.gcszhn.system.service.docker.DockerNode;
 import org.gcszhn.system.service.docker.DockerService;
@@ -50,6 +51,9 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 public class UserAuthController {
+    /**集群服务 */
+    @Autowired
+    ClusterService clusterService;
     /**用户DAO服务 */
     @Autowired
     UserDaoService userDaoService;
@@ -171,13 +175,13 @@ public class UserAuthController {
             User user = null;
             if (session != null && (user = (User)session.getAttribute("user"))!=null) {
                 UserNode userNode = user.getAliveNode();
-                DockerNode dockerNode = dockerService.getDockerNodeByHost(userNode.getHost());
+                DockerNode dockerNode = clusterService.getDockerNodeByHost(userNode.getHost());
                 try (DockerClient dockerClient = dockerService.creatClient(
-                    dockerService.getDomain()+"."+userNode.getHost(), 
+                    clusterService.getClusterDomain()+"."+userNode.getHost(), 
                     dockerNode.getPort(), dockerNode.getApiVersion());) {
                     
                     //若容器未启动，再启动容器。
-                    String name = dockerService.getContainerNamePrefix()+user.getAccount();
+                    String name = clusterService.getClusterContainerPrefix()+user.getAccount();
                     
                     dockerService.startContainer(dockerClient, name);
                     //测试内部程序是否启动
@@ -187,7 +191,7 @@ public class UserAuthController {
                             //发起连接测试
                             HttpURLConnection connection = HttpRequest.getHttpURLConnection(
                                 String.format("http://%s.%d:%d/", 
-                                    dockerService.getDomain(),
+                                    clusterService.getClusterDomain(),
                                     userNode.getHost(),
                                     userNode.getPortMap()[1][0]
                                     ), "get");

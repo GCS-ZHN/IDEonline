@@ -30,6 +30,7 @@ import org.apache.logging.log4j.Level;
 import org.gcszhn.system.log.AppLog;
 import org.gcszhn.system.service.redis.RedisService;
 import org.gcszhn.system.service.user.UserService;
+import org.gcszhn.system.service.cluster.ClusterService;
 import org.gcszhn.system.service.dao.UserDaoService;
 import org.gcszhn.system.service.docker.DockerContainerConfig;
 import org.gcszhn.system.service.docker.DockerExecConfig;
@@ -60,6 +61,9 @@ import lombok.Getter;
 @Service
 @DependsOn(value = { "redisServiceImpl" })
 public class UserServiceImpl implements UserService {
+    /**集群服务 */
+    @Autowired
+    ClusterService clusterService;
     /** DAO服务 */
     @Autowired
     private UserDaoService userDaoService;
@@ -153,8 +157,8 @@ public class UserServiceImpl implements UserService {
         }
         try {
             for (UserNode nc : user.getNodeConfigs()) {
-                String ip = dockerService.getDomain() + "." + nc.getHost();
-                DockerNode dockerNode = dockerService.getDockerNodeByHost(nc.getHost());
+                String ip = clusterService.getClusterDomain() + "." + nc.getHost();
+                DockerNode dockerNode = clusterService.getDockerNodeByHost(nc.getHost());
                 try (DockerClient dockerClient = dockerService.creatClient(ip, dockerNode.getPort(),
                         dockerNode.getApiVersion())) {
                     // Docker容器配置
@@ -165,7 +169,7 @@ public class UserServiceImpl implements UserService {
                     }
                     DockerContainerConfig config = new DockerContainerConfig(
                         dockerNode.getImage(),
-                        dockerService.getContainerNamePrefix() + user.getAccount(), false)
+                        clusterService.getClusterContainerPrefix() + user.getAccount(), false)
                                     .withGPUEnable(nc.isEnableGPU())                            // GPU是否启用
                                     .withPrivileged(nc.isWithPrivilege())                       // 是否有root权限
                                     .withMemoryLimit(24L, DockerContainerConfig.VolumeUnit.GB)  // 实际内存及SWAP总限制
@@ -192,12 +196,12 @@ public class UserServiceImpl implements UserService {
             return;
         try {
             for (UserNode nc : user.getNodeConfigs()) {
-                String ip = dockerService.getDomain() + "." + nc.getHost();
-                DockerNode dockerNode = dockerService.getDockerNodeByHost(nc.getHost());
+                String ip = clusterService.getClusterDomain() + "." + nc.getHost();
+                DockerNode dockerNode = clusterService.getDockerNodeByHost(nc.getHost());
                 try (DockerClient dockerClient = dockerService.creatClient(ip, dockerNode.getPort(),
                         dockerNode.getApiVersion())) {
                     dockerService.deleteContainer(dockerClient, 
-                    dockerService.getContainerNamePrefix() + user.getAccount());
+                    clusterService.getClusterContainerPrefix() + user.getAccount());
                 } catch (Exception e) {
                     AppLog.printMessage(null, e, Level.ERROR);
                 }
@@ -408,17 +412,17 @@ public class UserServiceImpl implements UserService {
     @Override
     public void startUserJob(UserJob userJob) {
         try {
-            DockerNode dockerNode = dockerService.getDockerNodeByHost(userJob.getHost());
+            DockerNode dockerNode = clusterService.getDockerNodeByHost(userJob.getHost());
             //创建Docker客户端
             DockerClient dockerClient = dockerService.creatClient(
-                dockerService.getDomain()+"."+dockerNode.getHost(),
+                clusterService.getClusterDomain()+"."+dockerNode.getHost(),
                 dockerNode.getPort(),
                 dockerNode.getApiVersion());
             
             //创建配置信息
             String stdoutf = userJob.getStdoutfile();
             String account = userJob.getAccount();
-            String imageName = dockerService.getContainerNamePrefix()+account;
+            String imageName = clusterService.getClusterContainerPrefix()+account;
             FileOutputStream stdout = new FileOutputStream(getUserBaseDir()+ account +
                 (stdoutf!=null && !stdoutf.equals("default")?(
                     (stdoutf.startsWith("/")?stdoutf:"/"+stdoutf)
@@ -455,7 +459,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void stopUserJob(UserJob userJob) {
         try {
-            DockerNode dockerNode = dockerService.getDockerNodeByHost(userJob.getHost());
+            DockerNode dockerNode = clusterService.getDockerNodeByHost(userJob.getHost());
             dockerService.stopBackgroundJob(
                 dockerNode, 
                 userJob.getExecId(),

@@ -13,13 +13,19 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service.user;
+package org.gcszhn.system.service.cluster;
+
+import org.gcszhn.system.service.docker.DockerNode;
+import org.gcszhn.system.service.ssh.SSHNode;
 
 /**
- * 用户动作
+ * 集群服务
  * @author Zhang.H.N
  * @version 1.0
  */
-public enum UserAction {
-    LOGIN, LOGOUT, REGISTER, CANCEL;
+public interface ClusterService {
+    public SSHNode getSshNodeByHost(int host);
+    public DockerNode getDockerNodeByHost(int host);
+    public String getClusterDomain();
+    public String getClusterContainerPrefix();
 }

@@ -37,7 +37,7 @@ public class JSONConfig {
     /**项目默认字符集 */
     public static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
     /**Dock容器配置 */
-    private @Getter JSONObject dockerConfig;
+    private @Getter JSONObject clusterConfig;
     /**管理员配置 */
     private @Getter JSONObject managerConfig;
     /**JSON 配置文件位置 */
@@ -48,10 +48,10 @@ public class JSONConfig {
             String jsonString = new String(is.readAllBytes(), DEFAULT_CHARSET);
             is.close();
             JSONObject jsonObject = JSON.parseObject(jsonString);
-            dockerConfig = jsonObject.getJSONObject("dockerCluster");
+            clusterConfig = jsonObject.getJSONObject("cluster");
             managerConfig = jsonObject.getJSONObject("manager");
-            if (dockerConfig == null||managerConfig == null) {
-                throw new ConfigException("docker|manager|redis");
+            if (clusterConfig == null||managerConfig == null) {
+                throw new ConfigException("cluster|manager");
             }
         } catch (IOException e) {
             throw new ConfigException(e);

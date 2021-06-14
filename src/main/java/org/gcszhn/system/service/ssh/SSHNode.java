@@ -13,13 +13,18 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service.user;
+package org.gcszhn.system.service.ssh;
 
-/**
- * 用户动作
+import lombok.Data;
+
+/**SSH服务节点
  * @author Zhang.H.N
- * @version 1.0
+ * @v 1.0
  */
-public enum UserAction {
-    LOGIN, LOGOUT, REGISTER, CANCEL;
+@Data
+public class SSHNode {
+    private int host;
+    private String user;
+    private int port;
+    private String auth;
 }
