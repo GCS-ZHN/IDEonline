@@ -34,6 +34,11 @@ redis:
     host: ****
     port: ****
     password: ****
+    timeout: 3000 ## ms
+    maxTotal: 50
+    maxIdle: 5
+    maxWaitMillis: 3000
+    jmxEnabled: true
 
 mail:
     transport:

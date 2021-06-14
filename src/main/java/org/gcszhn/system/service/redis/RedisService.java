@@ -24,24 +24,9 @@ import redis.clients.jedis.Jedis;
 /**
  * APP中专门处理与Redis服务器交互的工具
  * @author Zhang.H.N
- * @version 1.0
+ * @version 1.1
  */
 public interface RedisService {
-    /**
-     * 初始化Redis主机
-     * @param host 配置的主机
-     */
-    public void setHost(String host);
-    /**
-     * 初始化Redis端口
-     * @param port 配置的端口
-     */
-    public void setPort(int port);
-    /**
-     * 初始化Redis密码
-     * @param passwd 配置的密码
-     */
-    public void setPassword(String passwd);
     /**
      * 连接指定主机指定端口的Redis服务器
      * @param host 主机IP或域名
@@ -49,6 +34,7 @@ public interface RedisService {
      * @param passwd 密码
      * @return Redis连接对象
      */
+    @Deprecated
     public Jedis getRedis(String host, int port, String passwd);
     /**
      * 连接指定主机的Redis服务器
@@ -56,12 +42,14 @@ public interface RedisService {
      * @param passwd 密码
      * @return Redis连接对象
      */
+    @Deprecated
     public Jedis getRedis(String host, String passwd);
     /**
      * 连接本地Redis服务器
      * @param passwd 密码
      * @return Redis连接对象
      */
+    @Deprecated
     public Jedis getRedis(String passwd);
     /**
      * 为哈希表添加字段
