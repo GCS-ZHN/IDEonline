@@ -97,13 +97,11 @@ public class UserDaoServiceImpl implements UserDaoService {
             UserRole role = null;
             Timestamp createTime = null;
             Timestamp lastLoginTime = null;
-            Object nodeset = null;
+            String nodeset = null;
             if (rs.size()==1) {
                 secret = (String) rs.get(0).get("password");
                 address = (String) rs.get(0).get("address");
-                if (!user.getAccount().equals("root")) {
-                    nodeset = rs.get(0).get("nodeconfig");
-                }
+                nodeset = (String) rs.get(0).get("nodeconfig");
                 role = UserRole.valueOf((String) rs.get(0).get("role"));
                 createTime =(Timestamp) rs.get(0).get("create_stamp");
                 lastLoginTime = (Timestamp) rs.get(0).get("last_login_stamp");
@@ -128,34 +126,18 @@ public class UserDaoServiceImpl implements UserDaoService {
                 user.setCreateTime(createTime);
                 user.setLastLoginTime(lastLoginTime);
                 user.setOwner(owner);
-                // root用户是管理员，没有节点信息
-                if (!user.getAccount().equals("root")) {
-                    user.setAddress(address);
-                    if (nodeset instanceof ArrayList) {//序列化对象
-                        user.setNodeConfigs((ArrayList<UserNode>) nodeset);
-                    } else if (nodeset instanceof byte[]) {//历史遗留数据格式
-                        Object nodeset1 = getObjectFromBytes((byte[]) nodeset);
-                        if (nodeset1 == null) {
-                            JSONArray jsonArray = JSONArray.parseArray(new String((byte[])nodeset));
-                            ArrayList<UserNode> newSets = new ArrayList<>(jsonArray.size());
-                            for (int i = 0; i < jsonArray.size(); i++) {
-                                newSets.add(UserNode.getUserNodeFromJSON(jsonArray.getJSONObject(i)));
-                            }
-                            user.setNodeConfigs(newSets);
-                        } else {
-                            user.setNodeConfigs((ArrayList<UserNode>) nodeset1);
-                        }
-                    } else if (nodeset instanceof String) {
-                        JSONArray jsonArray = JSONArray.parseArray((String)nodeset);
-                        ArrayList<UserNode> newSets = new ArrayList<>(jsonArray.size());
-                        for (int i = 0; i < jsonArray.size(); i++) {
-                            newSets.add(UserNode.getUserNodeFromJSON(jsonArray.getJSONObject(i)));
-                        }
-                        user.setNodeConfigs(newSets);
-                    } else {
-                       throw new UDException(new Exception("Ilegal Node Format!"));
+                user.setAddress(address);
+                if (nodeset != null) {
+                    JSONArray jsonArray = JSONArray.parseArray((String)nodeset);
+                    ArrayList<UserNode> newSets = new ArrayList<>(jsonArray.size());
+                    for (int i = 0; i < jsonArray.size(); i++) {
+                        newSets.add(UserNode.getUserNodeFromJSON(jsonArray.getJSONObject(i)));
                     }
+                    user.setNodeConfigs(newSets);
+                } else {
+                    throw new UDException(new Exception("Ilegal Node Format!"));
                 }
+                
                 return 0;
             } else {
                 AppLog.printMessage("Authentication failed!", Level.ERROR);
