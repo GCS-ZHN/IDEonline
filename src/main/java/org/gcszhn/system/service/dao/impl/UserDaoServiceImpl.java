@@ -93,6 +93,7 @@ public class UserDaoServiceImpl implements UserDaoService {
             List<Map<String, Object>> rs = jdbcTemplate.queryForList(sql, user.getAccount());
             String secret = null;
             String address = null;
+            String owner = null;
             UserRole role = null;
             Timestamp createTime = null;
             Timestamp lastLoginTime = null;
@@ -106,6 +107,7 @@ public class UserDaoServiceImpl implements UserDaoService {
                 role = UserRole.valueOf((String) rs.get(0).get("role"));
                 createTime =(Timestamp) rs.get(0).get("create_stamp");
                 lastLoginTime = (Timestamp) rs.get(0).get("last_login_stamp");
+                owner = (String) rs.get(0).get("owner");
             } else if (rs.isEmpty()) {
                 AppLog.printMessage("User not found!", Level.ERROR);
                 return -1;
@@ -125,6 +127,7 @@ public class UserDaoServiceImpl implements UserDaoService {
                 user.setUseRole(role);
                 user.setCreateTime(createTime);
                 user.setLastLoginTime(lastLoginTime);
+                user.setOwner(owner);
                 // root用户是管理员，没有节点信息
                 if (!user.getAccount().equals("root")) {
                     user.setAddress(address);
