@@ -52,6 +52,11 @@ public interface RedisService {
     @Deprecated
     public Jedis getRedis(String passwd);
     /**
+     * 从数据库连接池获取实例对象
+     * @return redis连接实例
+     */
+    public Jedis getRedis();
+    /**
      * 为哈希表添加字段
      * @param key 哈希表键值
      * @param field 字段

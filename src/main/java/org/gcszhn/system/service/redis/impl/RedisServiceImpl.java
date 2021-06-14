@@ -52,6 +52,10 @@ public class RedisServiceImpl implements RedisService {
     private int timeout;
     /**数据库连接池 */
     JedisPool jedisPool;
+    /**
+     * 配置数据库连接池
+     * @param env spring环境
+     */
     @Autowired
     public void setJedisPool(Environment env) {
         GenericObjectPoolConfig<Jedis> poolConfig = new GenericObjectPoolConfig<>();
@@ -62,6 +66,11 @@ public class RedisServiceImpl implements RedisService {
         jedisPool = new JedisPool(poolConfig, host, port, timeout, pass);
         AppLog.printMessage("Initialize jedis pool");
     }
+    /**
+     * 从Jedis Pool获取连接实例对象
+     * @return redis连接实例
+     */
+    @Override
     public Jedis getRedis() {
         Jedis jedis = jedisPool.getResource();
         AppLog.printMessage(String.format(
