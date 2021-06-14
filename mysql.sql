@@ -26,7 +26,7 @@ UPDATE idrb_platform.account SET owner='张洪宁' WHERE username='zhanghn';
 UPDATE idrb_platform.account SET owner='刘金' WHERE username='liujin';
 UPDATE idrb_platform.account SET owner='郑玲燕' WHERE username='zhengly';
 UPDATE idrb_platform.account SET owner='夏伟琪' WHERE username='xiawq';
-UPDATE idrb_platform.account SET owner='曹端华' WHERE username='bodao';
+
 UPDATE idrb_platform.account SET owner='张滢' WHERE username='zhangying';
 UPDATE idrb_platform.account SET owner='王云霞' WHERE username='wangyx';
 UPDATE idrb_platform.account SET owner='李丰成' WHERE username='lifengcheng';
@@ -43,4 +43,5 @@ UPDATE idrb_platform.account SET owner='测试用户' WHERE username='dockerTest
 # UPDATE idrb_platform.account SET address='zhanghy@zju.edu.cn' WHERE username='zhanghy';
 # UPDATE idrb_platform.account SET address='caodh@zju.edu.cn' WHERE username='bodao';
 # SELECT * FROM idrb_platform.account LIMIT 2
-update idrb_platform.account set nodeconfig=replace(nodeconfig,'"enableGPU":false,"host":41','"enableGPU":true,"host":41')
+# update idrb_platform.account set nodeconfig=replace(nodeconfig,'"enableGPU":false,"host":41','"enableGPU":true,"host":41')
+UPDATE idrb_platform.account SET id=1 WHERE username='root';

@@ -17,10 +17,14 @@ package org.gcszhn;
 
 
 import org.gcszhn.system.service.docker.DockerService;
+import org.gcszhn.system.service.user.User;
 import org.gcszhn.system.service.user.UserJob;
+import org.gcszhn.system.service.user.UserNode;
+import org.gcszhn.system.service.user.UserRole;
 import org.gcszhn.system.service.user.UserService;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.Rollback;
 
 public class UserServiceTest extends AppTest {
     @Autowired
@@ -50,5 +54,50 @@ public class UserServiceTest extends AppTest {
         userJob.setExecId("3d86ac9f681ae94da0779e6123491416fc407c5df1ba7b8d3055b7ec0f4ec1da");
         userService.stopUserJob(userJob);
         Thread.sleep(5000);
+    }
+    @Rollback(false)
+    @Test
+    public void testCreateUser() {
+        User user = userService.createUser("root", "idrb@sugon", null,
+            new UserNode(210, false, true, new int[][]{
+                {48999, 8888},
+                {47999, 8067},
+                {46999, 8080}
+            }),
+            new UserNode(41, true, true, new int[][]{
+                {48999, 8888},
+                {47999, 8067},
+                {46999, 8080}
+            }),
+            new UserNode(12, false, true, new int[][]{
+                {48999, 8888},
+                {47999, 8067},
+                {46999, 8080}
+            }),
+            new UserNode(3, false, true, new int[][]{
+                {48999, 8888},
+                {47999, 8067},
+                {46999, 8080}
+            }),
+            new UserNode(2, false, true, new int[][]{
+                {48999, 8888},
+                {47999, 8067},
+                {46999, 8080}
+            }),
+            new UserNode(1, false, true, new int[][]{
+                {48999, 8888},
+                {47999, 8067},
+                {46999, 8080}
+            })
+        );
+        user.setUseRole(UserRole.root);
+        user.setOwner("root");
+        userService.registerAccount(user);
+    }
+    @Rollback(false)
+    @Test
+    public void testCancelUser() {
+        User user = userService.createUser("admin", "idrb@sugon", null);
+        userService.cancelAccount(user);
     }
 }

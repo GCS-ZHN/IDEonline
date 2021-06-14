@@ -174,7 +174,7 @@ public class UserServiceImpl implements UserService {
                                     .withPrivileged(nc.isWithPrivilege())                       // 是否有root权限
                                     .withMemoryLimit(24L, DockerContainerConfig.VolumeUnit.GB)  // 实际内存及SWAP总限制
                                     .withPortBindings(nc.getPortMap())                          // 端口映射
-                                    .withVolumeBindings(dirMap)                                 // 硬盘卷映射
+                                    .withVolumeDefaultBindings(dirMap)                          // 硬盘卷映射
                                     .withCmdArgs(user.getAccount());                            // CMD指令参数
 
                     dockerService.createContainer(dockerClient, config);
@@ -233,7 +233,7 @@ public class UserServiceImpl implements UserService {
     public void sendMailToAll(UserMail userMail) {
         try {
             userDaoService.fetchUserList().forEach((User user) -> {
-                if (user.getAddress() != null) {
+                if (user.getAddress() != null && !user.getAddress().equals("")) {
                     sendAsyncMail(user, userMail);    //这里是异步发送
                 }
             });
