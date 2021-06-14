@@ -43,6 +43,4 @@ UPDATE idrb_platform.account SET owner='测试用户' WHERE username='dockerTest
 # UPDATE idrb_platform.account SET address='zhanghy@zju.edu.cn' WHERE username='zhanghy';
 # UPDATE idrb_platform.account SET address='caodh@zju.edu.cn' WHERE username='bodao';
 # SELECT * FROM idrb_platform.account LIMIT 2
-UPDATE idrb_platform.account SET role='manager' WHERE role='M';
-UPDATE idrb_platform.account SET role='root' WHERE role='R';
-UPDATE idrb_platform.account SET role='normal' WHERE role='N';
+update idrb_platform.account set nodeconfig=replace(nodeconfig,'"enableGPU":false,"host":41','"enableGPU":true,"host":41')

@@ -44,7 +44,7 @@ public class UserNode implements Serializable {
     private @Getter int[][] portMap;
     /**
      * 节点配置构造方法
-     * @param hostIndex 使用节点的节点列表索引
+     * @param host 使用节点主机ID
      * @param enableGPU 是否启用GPU，仅对含GPU节点有效 
      * @param withPrivilege 是否赋予最大权限
      * @param portMap 端口映射
@@ -72,8 +72,9 @@ public class UserNode implements Serializable {
             pMap[i][0] = jsonArray.getJSONArray(i).getIntValue(0);
             pMap[i][1] = jsonArray.getJSONArray(i).getIntValue(1);
         }
-        UserNode un = new UserNode(0, 
-            jsonObject.getBooleanValue("enableGPU"),
+        UserNode un = new UserNode(
+            jsonObject.getIntValue("host"),
+            jsonObject.getBooleanValue("enableGPU"),    //该值还由host限制，只有gpu节点才可以是true
             jsonObject.getBooleanValue("withPrivilege"),
             pMap
         );

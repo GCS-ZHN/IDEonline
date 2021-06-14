@@ -185,7 +185,7 @@ public class UserDaoServiceImpl implements UserDaoService {
     }
     @Override
     public List<User> fetchUserList() {
-        String sql = "SELECT username,nodeconfig,address FROM " +table;
+        String sql = "SELECT * FROM " +table;
         List<Map<String, Object>> result = jdbcTemplate.queryForList(sql);
         List<User> res = new ArrayList<>(result.size());
         result.forEach((Map<String, Object> mp)->{
@@ -194,6 +194,10 @@ public class UserDaoServiceImpl implements UserDaoService {
                 res.add(user);
                 user.setAccount((String)mp.get("username"));
                 user.setAddress((String)mp.get("address"));
+                user.setCreateTime((Timestamp)mp.get("create_stamp"));
+                user.setLastLoginTime((Timestamp)mp.get("last_login_stamp"));
+                user.setOwner((String)mp.get("owner"));
+                user.setUseRole(UserRole.valueOf((String)mp.get("role")));
                 String jsonString = (String)mp.get("nodeconfig");
                 if (jsonString != null && !jsonString.equals("")) {
                     JSONArray jsonArray = JSONArray.parseArray(jsonString);
