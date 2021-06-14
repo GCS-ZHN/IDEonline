@@ -258,7 +258,7 @@ public class DockerServiceImpl implements DockerService {
             if (response.isRunning()) {
                 Long pid = response.getPidLong();
                 if (pid > 0) {
-                    Session session = sshService.getConfigSession(dockerNode.getHost());
+                    Session session = sshService.getClusterSession(dockerNode.getHost());
                     ByteArrayOutputStream stdout = new ByteArrayOutputStream();
                     ByteArrayOutputStream stderr = new ByteArrayOutputStream();
                     sshService.remoteExec(

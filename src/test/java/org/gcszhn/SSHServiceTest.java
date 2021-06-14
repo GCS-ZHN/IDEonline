@@ -46,7 +46,7 @@ public class SSHServiceTest extends AppTest {
         int[] hosts = {1,2,3,12,41,210};
         for (int host: hosts) {
             System.out.println("Test node " + host);
-            Session session = sshService.getConfigSession(host);
+            Session session = sshService.getClusterSession(host);
             sshService.remoteExec(session, "which java", System.out, System.err);
             session.disconnect();
         }

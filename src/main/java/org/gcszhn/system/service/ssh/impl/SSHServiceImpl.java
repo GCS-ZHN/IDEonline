@@ -75,7 +75,7 @@ public class SSHServiceImpl implements SSHService {
         return session;
     }
     @Override
-    public Session getConfigSession(int host) {
+    public Session getClusterSession(int host) {
         SSHNode sshNode = clusterService.getSshNodeByHost(host);
         if (sshNode==null) return null;
         return getSession(

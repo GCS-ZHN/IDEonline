@@ -26,8 +26,30 @@ import com.jcraft.jsch.Session;
  * @version 1.0
  */
 public interface SSHService {
+    /**
+     * 获取SSH服务连接会话
+     * @param username 用户名
+     * @param passwd 密码
+     * @param host 目标服务器IP
+     * @param port ssh服务端口
+     * @param timeout ssh连接超时
+     * @param sshConfig ssh连接其他配置
+     * @return SSH连接会话
+     */
     public Session getSession(String username, String passwd, String host, 
     int port, int timeout, Properties sshConfig);
-    public Session getConfigSession(int host);
+    /**
+     * 获取APP集群配置的SSH连接
+     * @param host 集群节点
+     * @return SSH连接会话
+     */
+    public Session getClusterSession(int host);
+    /**
+     * 远程命令执行
+     * @param session SSH连接会话
+     * @param cmds 远程命令
+     * @param outputStream 命令标准输出
+     * @param errStream 命令标准错误
+     */
     public void remoteExec(Session session, String cmds, OutputStream outputStream, OutputStream errStream);
 }
