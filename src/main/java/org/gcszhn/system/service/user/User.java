@@ -67,7 +67,7 @@ public class User implements HttpSessionBindingListener, Serializable {
     private UserNode aliveNode = null;
     /**用户角色 */
     @Getter @Setter
-    private UserRole useRole;
+    private UserRole useRole = UserRole.normal;
     /**账号创建时间 */
     @Getter @Setter
     private Timestamp createTime;
