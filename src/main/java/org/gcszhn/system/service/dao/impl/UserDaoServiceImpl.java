@@ -15,8 +15,6 @@
  */
 package org.gcszhn.system.service.dao.impl;
 
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -205,19 +203,5 @@ public class UserDaoServiceImpl implements UserDaoService {
         String salt = RandomUtilis.getSalt(15);
         String enc_pass = ShaEncrypt.encrypt(passwd, salt);
         return salt + ":" + enc_pass;
-    }
-    /**
-     * 从字节数组中反序列化对象，用于支持旧版数据储存格式
-     * @param arr 字节数组输入
-     * @return 对象
-     */
-    public static Object getObjectFromBytes(byte[] arr) {
-        try {
-            ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(arr));
-            return ois.readObject();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 }
