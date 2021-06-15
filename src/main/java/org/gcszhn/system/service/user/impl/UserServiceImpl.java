@@ -365,10 +365,13 @@ public class UserServiceImpl implements UserService {
                 if (list.isEmpty()) userJobs.remove(username);
             }
             
-            //通知用户监听器，若对应节点没有任务则关闭容器
-            User.lock.lock();
-            User.logoutConditon.signalAll();
-            User.lock.unlock(); 
+            //异步通知用户监听器，若对应节点没有任务则关闭容器
+            new Thread(()->{
+                User.lock.lock();
+                User.logoutConditon.signalAll();
+                User.lock.unlock();
+                AppLog.printMessage("Async notify waited listener thread", Level.DEBUG);
+            }).start();
             
             AppLog.printMessage(
                 String.format("job %s for user %s with cmd: '%s' at node %d removed", 

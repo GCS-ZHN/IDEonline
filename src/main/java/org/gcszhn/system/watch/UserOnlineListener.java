@@ -46,21 +46,23 @@ public class UserOnlineListener implements UserListener {
 
     @Override
     public void userLogout(UserEvent ue) {
+        /**
+         * 建立docker服务连接，关闭容器
+         * 获取用户登出专用的锁，保证正常关闭不受到干扰
+         * 避免使用bean组件作为锁的源，因为spring可能会创建代理对象。
+         */
+        User.lock.lock();
+        AppLog.printMessage("Get lock of User.lock", Level.DEBUG);
         try {
             User user = ue.getUser();
             UserService userService = SpringTools.getBean(UserService.class);
-            /**
-             * 建立docker服务连接，关闭容器
-             * 获取用户登出专用的锁，保证正常关闭不受到干扰
-             * 避免使用bean组件作为锁的源，因为spring可能会创建代理对象。
-             */
-            User.lock.lock();
             UserNode aliveNode = user.getAliveNode();
             AppLog.printMessage(
                 String.format("Wait to close %s's container at %d", 
                 user.getAccount(), aliveNode.getHost()));
             //等待后台任务完成
             while (userService.hasUserBackgroundJob(user.getAccount(), aliveNode.getHost())) {
+                AppLog.printMessage("There are background job, wait it finished", Level.DEBUG);
                 User.logoutConditon.await();
             }
 
@@ -68,7 +70,10 @@ public class UserOnlineListener implements UserListener {
             User.logoutConditon.await(10, TimeUnit.SECONDS);
 
             //若获取锁前，已经重新登录相同节点，停止退出容器
-            if (userService.isOnlineUser(user)) return;
+            if (userService.isOnlineUser(user)) {
+                AppLog.printMessage("User is online, stop closing container", Level.DEBUG);
+                return;
+            }
             AppLog.printMessage(
                 String.format("Begin to close %s's container at %d", 
                 user.getAccount(), aliveNode.getHost()));
@@ -86,10 +91,11 @@ public class UserOnlineListener implements UserListener {
                 String.format("%s's container at %d closed", 
                 user.getAccount(), aliveNode.getHost()));
             
-            //解锁
-            User.lock.unlock();
         } catch (Exception e) {
             AppLog.printMessage(null, e, Level.ERROR);
+        } finally {//利用finally语句，即使return或者产生bug，都释放锁
+            User.lock.unlock();
+            AppLog.printMessage("Release lock of User.lock", Level.DEBUG);
         }
     }
 }

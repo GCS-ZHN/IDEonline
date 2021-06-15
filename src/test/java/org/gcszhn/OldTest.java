@@ -266,9 +266,17 @@ public class OldTest extends AppTest {
     }
     @Test
     public void test() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-        System.out.println(sdf.format(new Date(1623556427817L)));
+        try {
+            System.out.println(1);
+            return;
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            System.out.println(2);
+        }
+        System.out.println(3);
     }
+
 }
 
 
