@@ -83,7 +83,6 @@ public class UserDaoServiceImpl implements UserDaoService {
             throw new UDException(e);
         }
     }
-    @SuppressWarnings("unchecked")
     @Override
     public int verifyUser(User user) {
         try {
