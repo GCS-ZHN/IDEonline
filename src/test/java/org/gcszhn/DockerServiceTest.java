@@ -37,12 +37,16 @@ public class DockerServiceTest extends AppTest {
     /**docker服务 */
     @Autowired
     DockerService dockerService;
+    /**Docker客户端 */
     DockerClient client;
     @Autowired
     public void setDockerClient() {
         this.client = dockerService.creatClient(
             "172.16.10.210", 2375, "1.41");
     }
+    /**
+     * docker容器的创建与删除等测试
+     */
     @Test
     public void testDockerContainer() {
         try {
@@ -70,6 +74,11 @@ public class DockerServiceTest extends AppTest {
             AppLog.printMessage(null, e, Level.ERROR);
         }
     }
+    /**
+     * docker exec功能测试
+     * @throws IOException
+     * @throws InterruptedException
+     */
     @Test
     public void testDockerExec() throws IOException, InterruptedException {
         try {
@@ -99,6 +108,9 @@ public class DockerServiceTest extends AppTest {
             dockerService.wait(5000);
         }
     }
+    /**
+     * docker exec运行状态获取测试
+     */
     @Test
     public void testDockerExecStatus() {
         InspectExecResponse response = dockerService.getBackgroundStatus(
@@ -106,22 +118,5 @@ public class DockerServiceTest extends AppTest {
         System.out.println(response.getPidLong());
         System.out.println(response.getExitCodeLong());
         System.out.println(response.isRunning());
-    }
-    @Test
-    public void testStartBackgroundJob() throws InterruptedException {
-        dockerService.startBackgroundJob(
-            client, 
-            "MULTIPLE1.1-zhanghn", 
-            "4b12acc290aa84cabec542b6a4c6b2eee2166a3c855ac556b8a6710c58b12c18", 
-            new DockerExecConfig(), 
-            ()->{
-                synchronized(dockerService) {
-                    System.out.println("Finished it");
-                    dockerService.notifyAll();
-                }
-            });
-        synchronized(dockerService) {
-            dockerService.wait();
-        }
     }
 }

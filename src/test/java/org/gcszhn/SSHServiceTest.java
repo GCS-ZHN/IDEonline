@@ -25,9 +25,17 @@ import org.gcszhn.system.service.ssh.SSHService;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+/**
+ * SSH服务单元测试
+ * @author Zhang.H.N
+ * @version 1.0
+ */
 public class SSHServiceTest extends AppTest {
     @Autowired
     SSHService sshService;
+    /**
+     * ssh服务执行远程命令测试
+     */
     @Test
     public void sshExecTest() {
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
@@ -41,6 +49,9 @@ public class SSHServiceTest extends AppTest {
         System.out.print(stdout.toString());
         System.out.print(stderr.toString());
     }
+    /**
+     * 测试APP集群配置
+     */
     @Test
     public void sshClusterTest() {
         int[] hosts = {1,2,3,12,41,210};

@@ -51,7 +51,14 @@ public interface UserDaoService {
     public void updateUser(User user);
     /**
      * fetch user list from database
+     * @param offset 偏移量，即从offset + 1个记录开始
+     * @param length 查询数量，即从 offset + 1到offset + length的记录
      * @return list object of user;
      */
-    public List<User> fetchUserList();
+    public List<User> fetchUserList(int offset, int length);
+    /**
+     * 获取注册用户的数量
+     * @return 注册用户的数量
+     */
+    public long getUserCount();
 }

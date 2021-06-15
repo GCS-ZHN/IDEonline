@@ -24,16 +24,23 @@ import org.gcszhn.system.service.mail.MailService;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+/**
+ * 邮件服务的单元测试
+ * @author Zhang.H.N
+ * @version 1.0
+ */
 public class MailServiceTest extends AppTest {
     @Autowired
-    //@Qualifier("hutoolmail")
-    MailService service;
-
+    MailService mailService;
+    /**
+     * 发送邮件测试
+     * @throws Exception
+     */
     @Test
     public void sendEmailTest() throws Exception {
         try (FileInputStream fis = new FileInputStream("temp/mail.vm")) {
             String content = new String(fis.readAllBytes(), JSONConfig.DEFAULT_CHARSET);
-            service.sendMail(
+            mailService.sendMail(
                 "zhang.h.n@foxmail.com", 
                 "IDEonline system update", 
                 content, 
@@ -42,8 +49,11 @@ public class MailServiceTest extends AppTest {
             Thread.sleep(10000);
         }
     }
+    /**
+     * 读取收件箱测试
+     */
     @Test
     public void readInBoxTest() {
-        service.readInbox(Folder.READ_ONLY);
+        mailService.readInbox(Folder.READ_ONLY);
     }
 }

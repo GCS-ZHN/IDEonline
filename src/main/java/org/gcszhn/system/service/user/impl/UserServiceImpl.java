@@ -232,7 +232,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void sendMailToAll(UserMail userMail) {
         try {
-            userDaoService.fetchUserList().forEach((User user) -> {
+            userDaoService.fetchUserList(0, -1).forEach((User user) -> {
                 if (user.getAddress() != null && !user.getAddress().equals("")) {
                     sendAsyncMail(user, userMail);    //这里是异步发送
                 }

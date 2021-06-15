@@ -94,6 +94,7 @@ public class UserDaoServiceImpl implements UserDaoService {
             UserRole role = null;
             Timestamp createTime = null;
             Timestamp lastLoginTime = null;
+            boolean enable = true;
             String nodeset = null;
             if (rs.size()==1) {
                 secret = (String) rs.get(0).get("password");
@@ -103,6 +104,7 @@ public class UserDaoServiceImpl implements UserDaoService {
                 createTime =(Timestamp) rs.get(0).get("create_stamp");
                 lastLoginTime = (Timestamp) rs.get(0).get("last_login_stamp");
                 owner = (String) rs.get(0).get("owner");
+                enable = (Integer) rs.get(0).get("enable")==1;
             } else if (rs.isEmpty()) {
                 AppLog.printMessage("User not found!", Level.ERROR);
                 return -1;
@@ -124,6 +126,7 @@ public class UserDaoServiceImpl implements UserDaoService {
                 user.setLastLoginTime(lastLoginTime);
                 user.setOwner(owner);
                 user.setAddress(address);
+                user.setEnable(enable);
                 if (nodeset != null) {
                     JSONArray jsonArray = JSONArray.parseArray((String)nodeset);
                     ArrayList<UserNode> newSets = new ArrayList<>(jsonArray.size());
@@ -149,7 +152,7 @@ public class UserDaoServiceImpl implements UserDaoService {
     public void updateUser(User user) {
         try {
             String sql = "UPDATE "+table+
-            " SET password=?,nodeconfig=?,address=?,role=?,owner=?,last_login_stamp=? WHERE username=?";
+            " SET password=?,nodeconfig=?,address=?,role=?,owner=?,last_login_stamp=?,enable=? WHERE username=?";
             jdbcTemplate.update(sql,
                 encryptPassword(user.getPassword()),
                 JSON.toJSONString(user.getNodeConfigs()),
@@ -157,6 +160,7 @@ public class UserDaoServiceImpl implements UserDaoService {
                 user.getUseRole().toString(),
                 user.getOwner(),
                 user.getLastLoginTime(),
+                user.isEnable(),
                 user.getAccount()
             );
             AppLog.printMessage("Update user info successfully!");
@@ -166,32 +170,51 @@ public class UserDaoServiceImpl implements UserDaoService {
         }
     }
     @Override
-    public List<User> fetchUserList() {
-        String sql = "SELECT * FROM " +table;
-        List<Map<String, Object>> result = jdbcTemplate.queryForList(sql);
-        List<User> res = new ArrayList<>(result.size());
-        result.forEach((Map<String, Object> mp)->{
-            if (mp != null) {
-                User user = new User();
-                res.add(user);
-                user.setAccount((String)mp.get("username"));
-                user.setAddress((String)mp.get("address"));
-                user.setCreateTime((Timestamp)mp.get("create_stamp"));
-                user.setLastLoginTime((Timestamp)mp.get("last_login_stamp"));
-                user.setOwner((String)mp.get("owner"));
-                user.setUseRole(UserRole.valueOf((String)mp.get("role")));
-                String jsonString = (String)mp.get("nodeconfig");
-                if (jsonString != null && !jsonString.equals("")) {
-                    JSONArray jsonArray = JSONArray.parseArray(jsonString);
-                    ArrayList<UserNode> newSets = new ArrayList<>(jsonArray.size());
-                    for (int i = 0; i < jsonArray.size(); i++) {
-                        newSets.add(UserNode.getUserNodeFromJSON(jsonArray.getJSONObject(i)));
+    public List<User> fetchUserList(int offset, int length) {
+        if (offset < 0) {
+            throw new IllegalArgumentException("offset should not be a negative number");
+        }
+        try {
+            String sql = "SELECT * FROM "+table+(length < 0?"":" LIMIT "+offset+","+length);
+            List<Map<String, Object>> result = jdbcTemplate.queryForList(sql);
+            List<User> res = new ArrayList<>(result.size());
+            result.forEach((Map<String, Object> mp)->{
+                if (mp != null) {
+                    User user = new User();
+                    res.add(user);
+                    user.setAccount((String)mp.get("username"));
+                    user.setAddress((String)mp.get("address"));
+                    user.setCreateTime((Timestamp)mp.get("create_stamp"));
+                    user.setLastLoginTime((Timestamp)mp.get("last_login_stamp"));
+                    user.setOwner((String)mp.get("owner"));
+                    user.setUseRole(UserRole.valueOf((String)mp.get("role")));
+                    user.setEnable((Integer)mp.get("enable")==1);
+                    String jsonString = (String)mp.get("nodeconfig");
+                    if (jsonString != null && !jsonString.equals("")) {
+                        JSONArray jsonArray = JSONArray.parseArray(jsonString);
+                        ArrayList<UserNode> newSets = new ArrayList<>(jsonArray.size());
+                        for (int i = 0; i < jsonArray.size(); i++) {
+                            newSets.add(UserNode.getUserNodeFromJSON(jsonArray.getJSONObject(i)));
+                        }
+                        user.setNodeConfigs(newSets);
                     }
-                    user.setNodeConfigs(newSets);
                 }
-            }
-        });
-        return res;
+            });
+            return res;
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
+        }
+        return new ArrayList<>();
+    }
+    @Override
+    public long getUserCount() {
+        try {
+            String sql = "SELECT COUNT(*) count FROM " + table;
+            return (Long)jdbcTemplate.queryForList(sql).get(0).get("count");
+        } catch (Exception e) {
+            AppLog.printMessage(null, e, Level.ERROR);
+        }
+        return 0;
     }
     /**
      * 将密码生成带盐SHA256密文

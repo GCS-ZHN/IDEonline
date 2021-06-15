@@ -22,7 +22,7 @@ import com.alibaba.fastjson.JSONObject;
 
 import org.gcszhn.system.config.JSONConfig;
 import org.gcszhn.system.log.AppLog;
-import org.gcszhn.system.service.until.ProcessInteraction;
+import org.gcszhn.system.untilis.ProcessInteraction;
 
 /**
  * 用于将旧账号用户数据迁移到新版本。

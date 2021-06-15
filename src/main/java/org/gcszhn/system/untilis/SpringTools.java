@@ -13,7 +13,7 @@
  * See the License for the specific language govering permissions and
  * limitations under the License.
  */
-package org.gcszhn.system.service.until;
+package org.gcszhn.system.untilis;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;

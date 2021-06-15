@@ -29,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.logging.log4j.Level;
 import org.gcszhn.system.log.AppLog;
 import org.gcszhn.system.service.redis.RedisService;
-import org.gcszhn.system.service.until.SpringTools;
+import org.gcszhn.system.untilis.SpringTools;
 import org.gcszhn.system.watch.UserEvent;
 import org.gcszhn.system.watch.UserListener;
 
@@ -74,6 +74,9 @@ public class User implements HttpSessionBindingListener, Serializable {
     /**账号最近登录时间 */
     @Getter @Setter
     private Timestamp lastLoginTime;
+    /**账号是否启用 */
+    @Getter @Setter
+    private boolean enable = true;
     /**注册节点列表 */
     @Getter
     private ArrayList<UserNode> nodeConfigs = new ArrayList<>(2);

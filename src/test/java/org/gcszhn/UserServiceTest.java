@@ -16,9 +16,15 @@
 package org.gcszhn;
 
 
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.Locale;
+
+import org.apache.velocity.VelocityContext;
 import org.gcszhn.system.service.docker.DockerService;
 import org.gcszhn.system.service.user.User;
 import org.gcszhn.system.service.user.UserJob;
+import org.gcszhn.system.service.user.UserMail;
 import org.gcszhn.system.service.user.UserNode;
 import org.gcszhn.system.service.user.UserRole;
 import org.gcszhn.system.service.user.UserService;
@@ -26,11 +32,20 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.Rollback;
 
+/**
+ * 用户服务单元测试
+ * @author Zhang.H.N
+ * @version 1.0
+ */
 public class UserServiceTest extends AppTest {
     @Autowired
     UserService userService;
     @Autowired
     DockerService dockerService;
+    /**
+     * 任务启动测试
+     * @throws InterruptedException
+     */
     @Test
     public void testBackgroundJob() throws InterruptedException {
         UserJob userJob = new UserJob();
@@ -47,6 +62,10 @@ public class UserServiceTest extends AppTest {
         System.out.println(userJob.getExecId());
         Thread.sleep(1000);
     }
+    /**
+     * 任务终止测试
+     * @throws InterruptedException
+     */
     @Test
     public void testTerminateJob() throws InterruptedException {
         UserJob userJob = new UserJob();
@@ -55,6 +74,9 @@ public class UserServiceTest extends AppTest {
         userService.stopUserJob(userJob);
         Thread.sleep(5000);
     }
+    /**
+     * 账号注册测试
+     */
     @Rollback(false)
     @Test
     public void testCreateUser() {
@@ -94,10 +116,68 @@ public class UserServiceTest extends AppTest {
         user.setOwner("root");
         userService.registerAccount(user);
     }
+    /**
+     * 账号注销测试
+     */
     @Rollback(false)
     @Test
     public void testCancelUser() {
         User user = userService.createUser("admin", "idrb@sugon", null);
         userService.cancelAccount(user);
+    }
+    /**
+     * 修改密码测试
+     */
+    @Rollback(false)
+    @Test
+    public void testSetPassowrd() {
+        User user = userService.createUser("test5", "test5", null);
+        userService.setPassword(user, "test6");
+    }
+    /**
+     * 单用户邮件测试
+     */
+    @Test
+    public void testUserMail() throws Exception {;
+        User user = userService.createUser("dockerTest", "no", "zhanghn@zju.edu.cn");
+        userService.sendAsyncMail(user, new UserMail(
+            "IDEonline更新维护的通知",
+            "mail.vm",
+            "text/html;charset=UTF-8",
+            (User u)->{
+                DateFormat df = DateFormat.getDateInstance(DateFormat.LONG, Locale.CHINA);
+                VelocityContext context = new VelocityContext();
+                context.put("user", u);
+                context.put("date", df.format(new Date()));
+                return context;
+            })
+        );
+        Thread.sleep(10000);
+    }
+    
+    /**
+     * 用户邮件群发测试
+     * 
+     * @throws InterruptedException
+     */
+    @Test
+    public void testMailToAll() throws InterruptedException {
+        User user3 = userService.createUser("test", "no", "zhang2016@zju.edu.cn");
+        userService.registerAccount(user3);
+        userService.sendMailToAll(new UserMail(
+            "IDEonline系统升级的补充通知",
+            "mail.vm",
+            "text/html;charset=UTF-8",
+            (User u)->{
+                DateFormat df = DateFormat.getDateInstance(DateFormat.LONG, Locale.CHINA);
+                VelocityContext context = new VelocityContext();
+                context.put("user", u);
+                context.put("date", df.format(new Date()));
+                return context;
+            })
+        );
+        Thread.sleep(20000);
+        userService.cancelAccount(user3);
+        
     }
 }
