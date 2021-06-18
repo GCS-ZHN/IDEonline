@@ -9,6 +9,10 @@
 </div>
 这是一个基于Spring Boot开发的IDRB实验室在线平台IDEonline的后台管理系统。涉及与redis、mysql、docker等交互。整个平台的核心部分是各内网服务器节点上的docker容器部署。利用mysql持久化用户信息，利用nginx进行动态反向代理和负载均衡，利用redis+lua实现nginx与java spring后台的会话共享。利用Vue+nodeJS+webpack搭建前端访问页面。
 
+# 应用启动
+`java -jar IDEonline-***.jar --server.port=8080`
+相应启动参数可以如`--server.port=8080`这样进行指定，也可以将资源文件内配置文件修改后重新打包。
+
 # 优化计划
 - 数据持久化
   - 持久化用户会话
