@@ -11,6 +11,7 @@
 
 # 应用启动
 `java -jar IDEonline-***.jar --server.port=8080`
+
 相应启动参数可以如`--server.port=8080`这样进行指定，也可以将资源文件内配置文件修改后重新打包。
 
 # 优化计划
