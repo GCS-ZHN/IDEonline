@@ -25,6 +25,7 @@ import org.gcszhn.system.log.AppLog;
 import org.gcszhn.system.service.docker.DockerContainerConfig;
 import org.gcszhn.system.service.docker.DockerExecConfig;
 import org.gcszhn.system.service.docker.DockerService;
+import org.gcszhn.system.service.docker.DockerContainerConfig.VolumeUnit;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -118,5 +119,27 @@ public class DockerServiceTest extends AppTest {
         System.out.println(response.getPidLong());
         System.out.println(response.getExitCodeLong());
         System.out.println(response.isRunning());
+    }
+    @Test
+    public void testUpdate() throws InterruptedException {
+        String[] user = {
+            "root",
+            "dockerTest",
+            "zhanghn",
+            "liujin",
+            "wangyx",
+            "lifengcheng",
+            "lumk",
+            "moumj",
+            "zhanghy",
+            "wangyx",
+            "zhengly",
+            "zhouy"
+        };
+        for (String u: user) {
+            dockerService.updateContainer(
+                client, "MULTIPLE1.1-"+ u,
+            new DockerContainerConfig(null, null, false).withMemoryLimit(48L, VolumeUnit.GB));
+        }
     }
 }

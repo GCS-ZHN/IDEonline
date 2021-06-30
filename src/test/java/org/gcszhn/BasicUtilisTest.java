@@ -104,4 +104,8 @@ public class BasicUtilisTest extends AppTest {
             }
         }, ("docker -H 172.16.10.41 start MULTIPLE1.1-lumk").split(" "));
     }
+    @Test
+    public void testLog() {
+        AppLog.printMessage("Hello world");
+    }
 }
