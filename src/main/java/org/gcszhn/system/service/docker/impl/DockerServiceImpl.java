@@ -83,7 +83,7 @@ public class DockerServiceImpl implements DockerService {
     }
     //@SuppressWarnings("deprecation") 此处吐槽原作者一百遍，能不能好好提供一下API文档，过时了把替代说清楚啊
     @Override
-    public synchronized CreateContainerResponse createContainer(DockerClient dockerClient, DockerContainerConfig config) {
+    public CreateContainerResponse createContainer(DockerClient dockerClient, DockerContainerConfig config) {
         CreateContainerResponse container = null;
         try {
             /**
@@ -128,7 +128,7 @@ public class DockerServiceImpl implements DockerService {
         return container;
     }
     @Override
-    public synchronized void deleteContainer(DockerClient dockerClient, String name) {
+    public void deleteContainer(DockerClient dockerClient, String name) {
         try {
             dockerClient.removeContainerCmd(name).withForce(true).exec();
             AppLog.printMessage("Container " + name +  " is removed successfully");
@@ -137,7 +137,7 @@ public class DockerServiceImpl implements DockerService {
         }
     }
     @Override
-    public synchronized void startContainer(DockerClient dockerClient, String name) {
+    public void startContainer(DockerClient dockerClient, String name) {
         try {
             if (!getContainerStatus(dockerClient, name)) {
                 dockerClient.startContainerCmd(name).exec();
@@ -150,7 +150,7 @@ public class DockerServiceImpl implements DockerService {
         }
     }
     @Override
-    public synchronized void stopContainer(DockerClient dockerClient, String name) {
+    public void stopContainer(DockerClient dockerClient, String name) {
         try {
             if (getContainerStatus(dockerClient, name)) {
                 dockerClient.stopContainerCmd(name).exec();

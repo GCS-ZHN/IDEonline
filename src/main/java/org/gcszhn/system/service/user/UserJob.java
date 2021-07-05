@@ -21,15 +21,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
 
-import lombok.AccessLevel;
 import lombok.Data;
-import lombok.Setter;
 
 /**
  * 用户任务实例
- * 
  * @author Zhang.H.N
- * @version 1.1
+ * @version 1.2
  */
 @Data
 public class UserJob implements Serializable {
@@ -47,10 +44,6 @@ public class UserJob implements Serializable {
     private int host;
     /** 任务execID */
     private String execId;
-    /**任务是否关闭 */
-    @Deprecated
-    @Setter(AccessLevel.PRIVATE)
-    private volatile boolean close;
     /** 任务标准输出 */
     private String stdoutfile;
     /** 任务超时 */
