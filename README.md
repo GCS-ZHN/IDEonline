@@ -14,6 +14,12 @@
 
 相应启动参数可以如`--server.port=8080`这样进行指定，也可以将资源文件内配置文件修改后重新打包。
 
+# 前端页面
+前端页面在[IDEonline-web](https://github.com/GCS-ZHN/IDEonline-web)这个项目中。
+
+# 后端容器
+后端docker容器是本系统的管理对象，相关dockerfile等在docker子目录
+
 # 优化计划
 - 数据持久化
   - 持久化用户会话

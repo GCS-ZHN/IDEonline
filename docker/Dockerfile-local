@@ -1,0 +1,29 @@
+FROM nvidia/cuda:11.1.1-cudnn-ubuntu16.04
+
+ENV PATH=/root/nodejs/bin:/root/anaconda3/bin:/usr/local/bin:$PATH
+COPY thirdPackage /root/packages
+COPY script /root/.script
+WORKDIR /root/
+RUN apt-get -y -q update && \
+    apt-get -y -q install --assume-yes apt-utils && \
+    apt-get -y -q install openssh-server && \
+    apt-get -y -q install inetutils-ping && \
+    apt-get -y -q install perl && \
+    apt-get -y -q install lsof && \ 
+    apt-get -y -q install cmake && \
+    apt-get -y -q install unzip && \
+    apt-get -y -q install git && \
+    apt-get -y -q install libgl1-mesa-glx && \
+    .script/install_gcc.sh && \
+    mv packages/node-v14.16.0-linux-x64 /root/nodejs && \
+    dpkg -i packages/code-server_3.9.3_amd64.deb && \
+    rm -f packages/code-server_3.9.3_amd64.deb && \
+    packages/Anaconda3-2020.07-Linux-x86_64.sh -b -p /root/anaconda3 && \
+    /root/anaconda3/bin/pip install pytorch/*.whl && \
+    /root/anaconda3/bin/pip install other/*.whl && \
+    /root/anaconda3/bin/pip install Tensorflow/*.whl Tensorflow/*.gz && \
+    ln -s /usr/local/cuda/lib64/libcusolver.so /usr/local/cuda/lib64/libcusolver.so.10 && \
+    rm -rf packages
+
+ENTRYPOINT ["/root/.script/tini","--","/root/.script/dip.sh"]
+CMD [ "zhanghn"]
