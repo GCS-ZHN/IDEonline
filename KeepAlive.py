@@ -31,21 +31,23 @@ class KeepAlive(object):
         """
         Args:
             cookieValue    用户登录后的cookie值，从浏览器获取
-            sec                      时间间隔，单位为秒
-            scheme            协议类型
-            domain            目标域名
+            sec            时间间隔，单位为秒
+            scheme         协议类型
+            domain         目标域名
         """
         self.__logger = logging.getLogger(KeepAlive.__name__)
         self.__scheme=scheme
         self.__domain=domain
         self.__uri="/backend/keepalive"
-        self.__cookieValue =  cookieValue
         self.__session = requests.Session()
         self.__session.cookies.set("JSESSIONID",  cookieValue,  path="/", domain=self.__domain)
         self.__sec = sec
         self.__logger.info("创建会话")
 
     def run(self):
+        """
+        给后台发送在线请求的核心方法
+        """
         while True:
             response = self.__session.get(f"{self.__scheme}://{self.__domain}{self.__uri}",  verify=False)
             content = response.json()
@@ -56,6 +58,9 @@ class KeepAlive(object):
             time.sleep(self.__sec)
 
     def close(self):
+        """
+        资源的释放
+        """
         self.__logger.info("关闭会话")
         self.__session.close()
 
